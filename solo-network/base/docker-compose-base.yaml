@@ -1,0 +1,60 @@
+version: '2'
+services:
+  # orderer.yzm.com:7050 节点配置
+  orderer.yzm.com:
+    container_name: orderer.yzm.com
+    extends:
+      file: peer-base.yaml
+      service: orderer-base
+    volumes:
+        - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+        - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer.yzm.com/msp:/var/hyperledger/orderer/msp
+        - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer.yzm.com/tls:/var/hyperledger/orderer/tls
+        - ../production/orderer:/var/hyperledger/production/orderer
+    ports:
+      - 7050:7050
+  # peer0.orga.com:7051 节点配置
+  peer0.orga.com:
+    container_name: peer0.orga.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.orga.com
+      - CORE_PEER_ADDRESS=peer0.orga.com:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.orga.com:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+        # GOSSIP协议设置/注意默认为127.0.0.1:7051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orga.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.orga.com:7051
+      - CORE_PEER_LOCALMSPID=OrgAMSP
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/peerOrganizations/orga.com/peers/peer0.orga.com/msp:/etc/hyperledger/fabric/msp
+        - ../crypto-config/peerOrganizations/orga.com/peers/peer0.orga.com/tls:/etc/hyperledger/fabric/tls
+        - ../production/orga:/var/hyperledger/production
+    ports:
+      - 7051:7051
+  # peer0.orgb.com:8051 节点配置
+  peer0.orgb.com:
+    container_name: peer0.orgb.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.orgb.com
+      - CORE_PEER_ADDRESS=peer0.orgb.com:8051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:8051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.orgb.com:8052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:8052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orgb.com:8051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.orgb.com:8051
+      - CORE_PEER_LOCALMSPID=OrgBMSP
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/peerOrganizations/orgb.com/peers/peer0.orgb.com/msp:/etc/hyperledger/fabric/msp
+        - ../crypto-config/peerOrganizations/orgb.com/peers/peer0.orgb.com/tls:/etc/hyperledger/fabric/tls
+        - ../production/orgb:/var/hyperledger/production
+    ports:
+      - 8051:8051

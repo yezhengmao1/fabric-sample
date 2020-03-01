@@ -1,0 +1,159 @@
+---
+Organizations:
+    - &OrdererOrg # Orderer
+        Name: OrdererOrg
+        ID: OrdererMSP
+        MSPDir: crypto-config/ordererOrganizations/yzm.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrdererMSP.admin')"
+    - &OrgA
+        Name: OrgAMSP
+        ID: OrgAMSP
+        MSPDir: crypto-config/peerOrganizations/orga.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrgAMSP.admin', 'OrgAMSP.peer', 'OrgAMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrgAMSP.admin', 'OrgAMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrgAMSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('OrgAMSP.peer')"
+        AnchorPeers:
+            - Host: peer0.orga.com
+              Port: 7051
+    - &OrgB
+        Name: OrgBMSP
+        ID: OrgBMSP
+        MSPDir: crypto-config/peerOrganizations/orgb.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrgBMSP.admin', 'OrgBMSP.peer', 'OrgBMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrgBMSP.admin', 'OrgBMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrgBMSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('OrgBMSP.peer')"
+        AnchorPeers:
+            - Host: peer0.orgb.com
+              Port: 8051
+
+Capabilities:
+    Channel: &ChannelCapabilities
+        V2_0: true
+    Orderer: &OrdererCapabilities
+        V2_0: true
+    Application: &ApplicationCapabilities
+        V2_0: true
+
+Application: &ApplicationDefaults
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        LifecycleEndorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+        Endorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+
+    Capabilities:
+        <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+    OrdererType: solo
+    Addresses:
+        - orderer.yzm.com:7050
+    BatchTimeout: 2s
+    BatchSize:
+        MaxMessageCount: 10
+        AbsoluteMaxBytes: 99 MB
+        PreferredMaxBytes: 512 KB
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        BlockValidation:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+
+Channel: &ChannelDefaults
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+
+    Capabilities:
+        <<: *ChannelCapabilities
+
+Profiles:
+    Channel:
+        Consortium: SampleConsortium
+        <<: *ChannelDefaults
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *OrgA
+                - *OrgB
+            Capabilities:
+                <<: *ApplicationCapabilities
+    Genesis:
+        <<: *ChannelDefaults
+        Capabilities:
+            <<: *ChannelCapabilities
+        Orderer:
+            <<: *OrdererDefaults
+            OrdererType: solo
+            Addresses:
+                - orderer.yzm.com:7050
+            Organizations:
+            - *OrdererOrg
+            Capabilities:
+                <<: *OrdererCapabilities
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+            - <<: *OrdererOrg
+        Consortiums:
+            SampleConsortium:
+                Organizations:
+                - *OrgA
+                - *OrgB
