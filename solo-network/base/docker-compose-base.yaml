@@ -1,6 +1,5 @@
 version: '2'
 services:
-  # orderer.yzm.com:7050 节点配置
   orderer.yzm.com:
     container_name: orderer.yzm.com
     extends:
@@ -13,7 +12,7 @@ services:
         - ../production/orderer:/var/hyperledger/production/orderer
     ports:
       - 7050:7050
-  # peer0.orga.com:7051 节点配置
+
   peer0.orga.com:
     container_name: peer0.orga.com
     extends:
@@ -25,7 +24,6 @@ services:
       - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
       - CORE_PEER_CHAINCODEADDRESS=peer0.orga.com:7052
       - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
-        # GOSSIP协议设置/注意默认为127.0.0.1:7051
       - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orga.com:7051
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.orga.com:7051
       - CORE_PEER_LOCALMSPID=OrgAMSP
@@ -36,7 +34,7 @@ services:
         - ../production/orga:/var/hyperledger/production
     ports:
       - 7051:7051
-  # peer0.orgb.com:8051 节点配置
+
   peer0.orgb.com:
     container_name: peer0.orgb.com
     extends:
@@ -48,8 +46,8 @@ services:
       - CORE_PEER_LISTENADDRESS=0.0.0.0:8051
       - CORE_PEER_CHAINCODEADDRESS=peer0.orgb.com:8052
       - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:8052
-      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orgb.com:8051
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.orgb.com:8051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orgb.com:8051
       - CORE_PEER_LOCALMSPID=OrgBMSP
     volumes:
         - /var/run/:/host/var/run/

@@ -1,6 +1,6 @@
 ---
 Organizations:
-    - &OrdererOrg # Orderer
+    - &OrdererOrg
         Name: OrdererOrg
         ID: OrdererMSP
         MSPDir: crypto-config/ordererOrganizations/yzm.com/msp
@@ -28,12 +28,10 @@ Organizations:
             Admins:
                 Type: Signature
                 Rule: "OR('OrgAMSP.admin')"
-            Endorsement:
-                Type: Signature
-                Rule: "OR('OrgAMSP.peer')"
         AnchorPeers:
             - Host: peer0.orga.com
               Port: 7051
+
     - &OrgB
         Name: OrgBMSP
         ID: OrgBMSP
@@ -48,23 +46,29 @@ Organizations:
             Admins:
                 Type: Signature
                 Rule: "OR('OrgBMSP.admin')"
-            Endorsement:
-                Type: Signature
-                Rule: "OR('OrgBMSP.peer')"
         AnchorPeers:
             - Host: peer0.orgb.com
               Port: 8051
 
 Capabilities:
     Channel: &ChannelCapabilities
-        V2_0: true
+        V1_4_3: true
+        V1_3: false
+        V1_1: false
+
     Orderer: &OrdererCapabilities
-        V2_0: true
+        V1_4_2: true
+        V1_1: false
+
     Application: &ApplicationCapabilities
-        V2_0: true
+        V1_4_2: true
+        V1_3: false
+        V1_2: false
+        V1_1: false
 
 Application: &ApplicationDefaults
     Organizations:
+
     Policies:
         Readers:
             Type: ImplicitMeta
@@ -75,12 +79,6 @@ Application: &ApplicationDefaults
         Admins:
             Type: ImplicitMeta
             Rule: "MAJORITY Admins"
-        LifecycleEndorsement:
-            Type: ImplicitMeta
-            Rule: "MAJORITY Endorsement"
-        Endorsement:
-            Type: ImplicitMeta
-            Rule: "MAJORITY Endorsement"
 
     Capabilities:
         <<: *ApplicationCapabilities
@@ -89,11 +87,13 @@ Orderer: &OrdererDefaults
     OrdererType: solo
     Addresses:
         - orderer.yzm.com:7050
+
     BatchTimeout: 2s
     BatchSize:
         MaxMessageCount: 10
         AbsoluteMaxBytes: 99 MB
         PreferredMaxBytes: 512 KB
+
     Organizations:
     Policies:
         Readers:
@@ -125,6 +125,19 @@ Channel: &ChannelDefaults
         <<: *ChannelCapabilities
 
 Profiles:
+    Genesis:
+        <<: *ChannelDefaults
+        Orderer:
+            <<: *OrdererDefaults
+            Organizations:
+                - *OrdererOrg
+            Capabilities:
+                <<: *OrdererCapabilities
+        Consortiums:
+            SampleConsortium:
+                Organizations:
+                    - *OrgA
+                    - *OrgB
     Channel:
         Consortium: SampleConsortium
         <<: *ChannelDefaults
@@ -135,25 +148,3 @@ Profiles:
                 - *OrgB
             Capabilities:
                 <<: *ApplicationCapabilities
-    Genesis:
-        <<: *ChannelDefaults
-        Capabilities:
-            <<: *ChannelCapabilities
-        Orderer:
-            <<: *OrdererDefaults
-            OrdererType: solo
-            Addresses:
-                - orderer.yzm.com:7050
-            Organizations:
-            - *OrdererOrg
-            Capabilities:
-                <<: *OrdererCapabilities
-        Application:
-            <<: *ApplicationDefaults
-            Organizations:
-            - <<: *OrdererOrg
-        Consortiums:
-            SampleConsortium:
-                Organizations:
-                - *OrgA
-                - *OrgB
