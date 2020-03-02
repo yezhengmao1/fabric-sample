@@ -14,8 +14,8 @@ if ! [ -x "$(command -v cryptogen)" ] ; then
     echo -e "\033[31m no cryptogen\033[0m"
     exit 1
 fi
-if [ "1.4.6" != "$(cryptogen version | grep Version | awk -F ': ' '{print $2}')" ] ; then
-    echo -e "\033[31m cryptogen version need 1.4.6\033[0m"
+if [ "1.4.4" != "$(cryptogen version | grep Version | awk -F ': ' '{print $2}')" ] ; then
+    echo -e "\033[31m cryptogen version need 1.4.4\033[0m"
     exit 1
 fi
 # 检测configtxgen和版本
@@ -23,8 +23,8 @@ if ! [ -x "$(command -v configtxgen)" ] ; then
     echo -e "\033[31m no configtxgen\033[0m"
     exit 1
 fi
-if [ "1.4.6" != "$(configtxgen --version | grep Version | awk -F ': ' '{print $2}')" ] ; then
-    echo -e "\033[31m configtxgen version need 1.4.6\033[0m"
+if [ "1.4.4" != "$(configtxgen --version | grep Version | awk -F ': ' '{print $2}')" ] ; then
+    echo -e "\033[31m configtxgen version need 1.4.4\033[0m"
     exit 1
 fi
 # 生成证书文件
