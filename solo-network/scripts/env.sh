@@ -145,6 +145,5 @@ case $1 in
         AnchorUpdate
         InstallChainCode
         InstantiateChainCode
-        TestDemo
         ;;
 esac
