@@ -10,6 +10,9 @@ PEERORGANODE=peer0.orga.com:7051
 PEERORGBNODE=peer0.orgb.com:8051
 CHANNEL_NAME=mychannel
 
+NAME=money_demo
+VERSION=1.0
+
 # 切换peer0 orgA
 OrgA(){
     CORE_PEER_MSPCONFIGPATH=${PEERROOT}/orga.com/users/Admin@orga.com/msp
@@ -65,15 +68,15 @@ AnchorUpdate() {
 InstallChainCode() {
     OrgA
     peer chaincode install \
-        -n demo \
-        -v 1.0 \
+        -n ${NAME} \
+        -v ${VERSION} \
         -p github.com/chaincode/demo/
     echo "peer0.orga.com install chaincode - demo"
 
     OrgB
     peer chaincode install \
-        -n demo \
-        -v 1.0 \
+        -n ${NAME} \
+        -v ${VERSION} \
         -p github.com/chaincode/demo/
     echo "peer0.orgb.com install chaincode - demo"
 }
@@ -83,41 +86,69 @@ InstantiateChainCode() {
     peer chaincode instantiate \
         -o ${ORDERERNODE} \
         -C ${CHANNEL_NAME} \
-        -n demo \
-        -v 1.0 \
-        -c '{"Args":["Init","a","100","b","100"]}' \
+        -n ${NAME} \
+        -v ${VERSION} \
+        -c '{"Args":["Init"]}' \
         -P "AND ('OrgAMSP.peer','OrgBMSP.peer')"
-    sleep 3
+    sleep 10
     echo "instantiate chaincode"
 }
 
 # 链码测试
 TestDemo() {
-    peer chaincode query \
-        -C ${CHANNEL_NAME} \
-        -n demo \
-        -c '{"Args":["query","a"]}'
-    peer chaincode query \
-        -C ${CHANNEL_NAME} \
-        -n demo \
-        -c '{"Args":["query","b"]}'
+    # 创建账户
     peer chaincode invoke \
         -C ${CHANNEL_NAME} \
         -o ${ORDERERNODE} \
-        -n demo \
+        -n ${NAME} \
         --peerAddresses ${PEERORGANODE} \
         --peerAddresses ${PEERORGBNODE} \
-        -c '{"Args":["invoke","a","b","1"]}'
-    # 等待共识完成
+        -c '{"Args":["open","count_a", "100"]}'
+    sleep 3
+    peer chaincode invoke \
+        -C ${CHANNEL_NAME} \
+        -o ${ORDERERNODE} \
+        -n ${NAME} \
+        --peerAddresses ${PEERORGANODE} \
+        --peerAddresses ${PEERORGBNODE} \
+        -c '{"Args":["open","count_b", "100"]}'
     sleep 3
     peer chaincode query \
         -C ${CHANNEL_NAME} \
-        -n demo \
-        -c '{"Args":["query","a"]}'
+        -n ${NAME} \
+        -c '{"Args":["query","count_a"]}'
     peer chaincode query \
         -C ${CHANNEL_NAME} \
-        -n demo \
-        -c '{"Args":["query","b"]}'
+        -n ${NAME} \
+        -c '{"Args":["query","count_b"]}'
+    peer chaincode invoke \
+        -C ${CHANNEL_NAME} \
+        -o ${ORDERERNODE} \
+        -n ${NAME} \
+        --peerAddresses ${PEERORGANODE} \
+        --peerAddresses ${PEERORGBNODE} \
+        -c '{"Args":["invoke","count_a","count_b","50"]}'
+    sleep 3
+    peer chaincode invoke \
+        -C ${CHANNEL_NAME} \
+        -o ${ORDERERNODE} \
+        -n ${NAME} \
+        --peerAddresses ${PEERORGANODE} \
+        --peerAddresses ${PEERORGBNODE} \
+        -c '{"Args":["open","count_c", "100"]}'
+    sleep 3
+    peer chaincode query \
+        -C ${CHANNEL_NAME} \
+        -n ${NAME} \
+        -c '{"Args":["query","count_a"]}'
+    peer chaincode query \
+        -C ${CHANNEL_NAME} \
+        -n ${NAME} \
+        -c '{"Args":["query","count_b"]}'
+    peer chaincode query \
+        -C ${CHANNEL_NAME} \
+        -n ${NAME} \
+        -c '{"Args":["query","count_c"]}'
 }
 
 case $1 in
@@ -137,6 +168,7 @@ case $1 in
         InstantiateChainCode
         ;;
     testdemo)
+        OrgA
         TestDemo
         ;;
     all)
@@ -145,5 +177,7 @@ case $1 in
         AnchorUpdate
         InstallChainCode
         InstantiateChainCode
+        OrgA
+        TestDemo
         ;;
 esac
