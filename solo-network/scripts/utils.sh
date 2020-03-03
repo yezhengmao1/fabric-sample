@@ -22,7 +22,7 @@ case $1 in
         ;;
     up)
         docker-compose -f ./docker-compose-cli.yaml up -d
-        docker exec -ti cli /bin/bash -c 'scripts/env.sh all'
+        docker exec cli /bin/bash -c "scripts/env.sh all"
         ;;
     down)
         docker kill $(docker ps -aq)
