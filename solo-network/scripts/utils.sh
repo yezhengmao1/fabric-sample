@@ -37,6 +37,7 @@ case $1 in
         docker system prune
         CleanFiles
         ;;
+    # 压力测试启动/关闭
     networkup)
         GetAllPkFiles
         docker-compose -f ./docker-compose-cli.yaml up -d
@@ -44,6 +45,7 @@ case $1 in
         ;;
     networkdown)
         docker kill $(docker ps -qa)
+        echo y | docker system prune
         CleanFiles
         ;;
 esac
