@@ -1,5 +1,11 @@
 #!/bin/bash
 
+ORGA=orga
+ORGB=orgb
+ORGAUSERS=(Admin User1)
+ORGBUSERS=(Admin User1)
+
+# 复制keystore
 CPFile() {
     files=$(ls $1)
     echo ${files[0]}
@@ -8,44 +14,35 @@ CPFile() {
     cd -
 }
 
-GetAllPkFiles() {
-    CPFile crypto-config/peerOrganizations/orga.com/users/Admin@orga.com/msp/keystore
-    CPFile crypto-config/peerOrganizations/orga.com/users/User1@orga.com/msp/keystore
-    CPFile crypto-config/peerOrganizations/orgb.com/users/Admin@orgb.com/msp/keystore
-    CPFile crypto-config/peerOrganizations/orgb.com/users/User1@orgb.com/msp/keystore
+# 复制所有文件keystore
+CPAllFiles() {
+    PREFIX=crypto-config/peerOrganizations
+    SUFFIX=msp/keystore
+    for u in ${ORGAUSERS[@]}; do
+        CPFile ${PREFIX}/${ORGA}.com/users/${u}@${ORGA}.com/${SUFFIX}
+    done
+    for u in ${ORGBUSERS[@]}; do
+        CPFile ${PREFIX}/${ORGB}.com/users/${u}@${ORGB}.com/${SUFFIX}
+    done
 }
 
-CleanFiles() {
+# 清理缓存文件
+Clean() {
     rm -rf ./channel-artifacts
     rm -rf ./crypto-config
     rm -rf ./production
 }
 
 case $1 in
-    pk)
-        GetAllPkFiles
-        ;;
-    clean)
-        CleanFiles
-        ;;
+    # 压力测试启动/关闭
     up)
+        CPAllFiles
         docker-compose -f ./docker-compose-cli.yaml up -d
         docker exec cli /bin/bash -c "scripts/env.sh all"
         ;;
     down)
-        docker kill $(docker ps -aq)
-        docker system prune
-        CleanFiles
-        ;;
-    # 压力测试启动/关闭
-    networkup)
-        GetAllPkFiles
-        docker-compose -f ./docker-compose-cli.yaml up -d
-        docker exec cli /bin/bash -c "scripts/env.sh all"
-        ;;
-    networkdown)
         docker kill $(docker ps -qa)
         echo y | docker system prune
-        CleanFiles
+        Clean
         ;;
 esac
