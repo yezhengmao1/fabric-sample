@@ -2,6 +2,10 @@ version: '2'
 
 networks:
   solonet:
+    ipam:
+      config:
+        - subnet: 172.22.0.0/26
+          gateway: 172.22.0.1
 
 services:
 
@@ -11,7 +15,8 @@ services:
       service: orderer.yzm.com
     container_name: orderer.yzm.com
     networks:
-      - solonet
+      solonet:
+        ipv4_address: 172.22.0.2
 
   peer0.orga.com:
     container_name: peer0.orga.com
@@ -19,7 +24,8 @@ services:
       file:  base/docker-compose-base.yaml
       service: peer0.orga.com
     networks:
-      - solonet
+      solonet:
+        ipv4_address: 172.22.0.3
 
   peer0.orgb.com:
     container_name: peer0.orgb.com
@@ -27,7 +33,8 @@ services:
       file:  base/docker-compose-base.yaml
       service: peer0.orgb.com
     networks:
-      - solonet
+      solonet:
+        ipv4_address: 172.22.0.4
 
   cli:
     container_name: cli
@@ -57,4 +64,5 @@ services:
       - peer0.orga.com
       - peer0.orgb.com
     networks:
-      - solonet
+      solonet:
+        ipv4_address: 172.22.0.5
