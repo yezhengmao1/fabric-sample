@@ -4,6 +4,7 @@ GENESIS_PROFILE=Genesis
 CHANNEL_PROFILE=Channel
 SYS_CHANNEL=sys-channel
 CHANNEL_NAME=mychannel
+VERSION=1.4.6
 
 FABRIC_CFG_PATH=$PWD
 
@@ -14,8 +15,8 @@ if ! [ -x "$(command -v cryptogen)" ] ; then
     echo -e "\033[31m no cryptogen\033[0m"
     exit 1
 fi
-if [ "1.4.4" != "$(cryptogen version | grep Version | awk -F ': ' '{print $2}')" ] ; then
-    echo -e "\033[31m cryptogen version need 1.4.4\033[0m"
+if [ ${VERSION} != "$(cryptogen version | grep Version | awk -F ': ' '{print $2}')" ] ; then
+    echo -e "\033[31m cryptogen need version \033[0m"${VERSION}
     exit 1
 fi
 # 检测configtxgen和版本
@@ -23,8 +24,8 @@ if ! [ -x "$(command -v configtxgen)" ] ; then
     echo -e "\033[31m no configtxgen\033[0m"
     exit 1
 fi
-if [ "1.4.4" != "$(configtxgen --version | grep Version | awk -F ': ' '{print $2}')" ] ; then
-    echo -e "\033[31m configtxgen version need 1.4.4\033[0m"
+if [ ${VERSION} != "$(configtxgen --version | grep Version | awk -F ': ' '{print $2}')" ] ; then
+    echo -e "\033[31m configtxgen need version \033[0m"${VERSION}
     exit 1
 fi
 # 生成证书文件
