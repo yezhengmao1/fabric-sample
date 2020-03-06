@@ -4,6 +4,7 @@ ORGA=orga
 ORGB=orgb
 ORGAUSERS=(Admin User1)
 ORGBUSERS=(Admin User1)
+VERSION=1.4.6
 
 # 复制keystore
 CPFile() {
@@ -37,7 +38,7 @@ case $1 in
     # 压力测试启动/关闭
     up)
         CPAllFiles
-        docker-compose -f ./docker-compose-cli.yaml up -d
+        env IMAGETAG=${VERSION} docker-compose -f ./docker-compose-cli.yaml up -d
         docker exec cli /bin/bash -c "scripts/env.sh all"
         ;;
     down)

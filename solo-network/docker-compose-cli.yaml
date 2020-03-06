@@ -31,7 +31,7 @@ services:
 
   cli:
     container_name: cli
-    image: hyperledger/fabric-tools:1.4.4
+    image: hyperledger/fabric-tools:$IMAGETAG
     tty: true
     stdin_open: true
     environment:
