@@ -32,6 +32,7 @@ Clean() {
     rm -rf ./channel-artifacts
     rm -rf ./crypto-config
     rm -rf ./production
+    rm -rf /tmp/crypto
 }
 
 case $1 in

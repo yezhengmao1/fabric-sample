@@ -1,15 +1,16 @@
 name: Fabric
 version: "1.0"
+
 mutual-tls: false
 
 caliper:
   blockchain: fabric
   command:
-    start: scripts/gen.sh;scripts/utils.sh networkup
-    end: scripts/utils.sh networkdown
+    start: scripts/gen.sh;scripts/utils.sh up
+    end: scripts/utils.sh down
 
 info:
-  Version: 1.4.4
+  Version: 1.4.6
   Size: 2 Orgs with 1 Peer
   Orderer: Solo
   Distribution: Single Host
@@ -42,10 +43,10 @@ clients:
 
 channels:
   mychannel:
-    configBinary: channel-artifacts/channel.tx
+    configBinary: ./channel-artifacts/channel.tx
     created: true
     orderers:
-    - orderer.yzm.com
+      - orderer.yzm.com
     peers:
       peer0.orga.com:
         endorsingPeer: true
@@ -58,8 +59,12 @@ channels:
     chaincodes:
     - id: money_demo
       version: "1.0"
+      contractID: money_demo
       language: golang
       path: ../chaincode/demo
+      targetPeers:
+      - peer0.orga.com
+      - peer0.orgb.com
 
 organizations:
   OrgA:
@@ -84,18 +89,15 @@ orderers:
   orderer.yzm.com:
     url: grpc://localhost:7050
     grpcOptions:
-      ssl-target-name-override: orderer.yzm.com
       grpc.keepalive_time_ms: 600000
 
 peers:
   peer0.orga.com:
     url: grpc://localhost:7051
     grpcOptions:
-      ssl-target-name-override: peer0.orga.com
       grpc.keepalive_time_ms: 600000
 
   peer0.orgb.com:
     url: grpc://localhost:8051
     grpcOptions:
-      ssl-target-name-override: peer0.orgb.com
       grpc.keepalive_time_ms: 600000

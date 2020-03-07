@@ -1,0 +1,28 @@
+test:
+  name: solo-network
+  description: solo-network
+  workers:
+    type: local
+    number: 1
+
+  rounds:
+  - label: open
+    description: 开户
+    txNumber: 1
+    rateControl:
+      type: fixed-rate
+      opts:
+        tps: 10
+    callback: benchmarks/callbacks/open.js
+    arguments:
+      money: 10000
+
+monitor:
+  interval: 1
+  type: 
+    - docker
+  docker:
+    containers:
+    - peer0.orga.com
+    - peer0.orgb.com
+    - orderer.yzm.com
