@@ -1,10 +1,10 @@
 # 环境说明
-* Hyperleger/fabric v1.4.6  
+* Hyperleger/fabric v1.4.4  
 * Hyperleger/caliepr-cli v0.3.0  
+* node v8.10.0 
+* npm v5.6.0 
 * docker 19.03.5  
 * docker-compose 1.25.4  
-* node v10.19.0  
-* npm v6.13.4  
 
 # 文件说明
 
