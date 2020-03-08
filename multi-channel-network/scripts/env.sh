@@ -10,8 +10,8 @@ PEER0ORGANODE=peer0.orgA.example.com:7051
 PEER0ORGBNODE=peer0.orgB.example.com:8051
 PEER1ORGBNODE=peer1.orgB.example.com:8061
 PEER2ORGBNODE=peer2.orgB.example.com:8071
-PEER3ORGBNODE=peer4.orgB.example.com:8081
-PEER4ORGBNODE=peer5.orgB.example.com:8091
+PEER3ORGBNODE=peer3.orgB.example.com:8081
+PEER4ORGBNODE=peer4.orgB.example.com:8091
 PEER0ORGCNODE=peer0.orgC.example.com:9051
 PEER1ORGCNODE=peer1.orgC.example.com:9061
 PEER2ORGCNODE=peer2.orgC.example.com:9071
@@ -54,7 +54,7 @@ OrgC(){
 }
 
 # 切换peer0 orgD
-OrgC(){
+OrgD(){
     CORE_PEER_MSPCONFIGPATH=${PEERROOT}/orgD.example.com/users/Admin@orgD.example.com/msp
     CORE_PEER_ADDRESS=${PEER0ORGDNODE}
     CORE_PEER_LOCALMSPID="OrgDMSP"
