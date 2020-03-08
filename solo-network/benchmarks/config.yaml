@@ -3,19 +3,44 @@ test:
   description: solo-network
   workers:
     type: local
-    number: 1
+    number: 4
 
   rounds:
   - label: open
-    description: 开户
-    txNumber: 1
+    description: open
+    txNumber: 1000
     rateControl:
       type: fixed-rate
       opts:
-        tps: 10
-    callback: benchmarks/callbacks/open.js
-    arguments:
-      money: 10000
+        tps: 100
+    callback: ../chaincode/demo/callback/open.js
+
+  - label: transfer
+    description: transfer
+    txNumber: 1000
+    rateControl:
+      type: fixed-rate
+      opts:
+        tps: 40
+    callback: ../chaincode/demo/callback/transfer.js
+
+  - label: query
+    description: query
+    txNumber: 1000
+    rateControl:
+      type: fixed-rate
+      opts:
+        tps: 100
+    callback: ../chaincode/demo/callback/query.js
+
+  - label: delete
+    description: delete
+    txNumber: 1000
+    rateControl:
+      type: fixed-rate
+      opts:
+        tps: 100
+    callback: ../chaincode/demo/callback/delete.js
 
 monitor:
   interval: 1
