@@ -83,7 +83,7 @@ Organizations:
                 Type: Signature
                 Rule: "OR('OrgDMSP.admin')"
         AnchorPeers:
-            - Host: peer0.orgC.example.com
+            - Host: peer0.orgD.example.com
               Port: 10051
 
 Capabilities:
