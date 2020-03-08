@@ -2,7 +2,7 @@
 
 GENESIS_PROFILE=Genesis
 CHANNEL_PROFILE=(ChannelABCD ChannelBC ChannelBCD ChannelCD)
-CHANNEL_ID=(channelabcd channelbc channlebcd channelcd)
+CHANNEL_ID=(channelabcd channelbc channelbcd channelcd)
 CHANNEL_ANCHOR=('OrgAMSP OrgBMSP OrgCMSP OrgDMSP' 'OrgBMSP OrgCMSP' 'OrgBMSP OrgCMSP OrgDMSP' 'OrgCMSP OrgDMSP')
 
 SYS_CHANNEL=sys-channel
@@ -45,11 +45,11 @@ configtxgen \
     -outputBlock ./channel-artifacts/genesis.block \
 # 生成通道交易
 echo -e "\033[31m generate channel transcation\033[0m"
-for i in ${CHANNEL_PROFILE[@]}; do
+for i in ${!CHANNEL_PROFILE[@]}; do
     configtxgen \
-        -profile ${i} \
-        -channelID ${i} \
-        -outputCreateChannelTx ./channel-artifacts/${i}.tx
+        -profile ${CHANNEL_PROFILE[$i]} \
+        -channelID ${CHANNEL_ID[$i]} \
+        -outputCreateChannelTx ./channel-artifacts/${CHANNEL_ID[$i]}.tx
 done
 # 生成铆节点配置
 for chi in ${!CHANNEL_ANCHOR[@]}; do

@@ -196,8 +196,8 @@ Profiles:
                  - *OrgB
                  - *OrgC
              Capabilities:
-                 <<: *ApplicationCapabilities   
-        
+                 <<: *ApplicationCapabilities
+
     ChannelBCD:
          Consortium: SampleConsortium
          <<: *ChannelDefaults
@@ -209,7 +209,7 @@ Profiles:
                  - *OrgD
              Capabilities:
                  <<: *ApplicationCapabilities
-                 
+
     ChannelCD:
          Consortium: SampleConsortium
          <<: *ChannelDefaults
@@ -220,4 +220,3 @@ Profiles:
                  - *OrgD
              Capabilities:
                  <<: *ApplicationCapabilities
-
