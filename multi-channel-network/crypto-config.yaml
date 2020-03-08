@@ -1,0 +1,39 @@
+OrdererOrgs:
+  - Name: Orderer
+    Domain: example.com
+    EnableNodeOUs: true
+    Specs:
+      - Hostname: orderer
+
+PeerOrgs:
+  - Name: OrgA
+    Domain: orgA.example.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+    Users:
+      Count: 0
+
+  - Name: OrgB
+    Domain: orgB.example.com
+    EnableNodeOUs: true
+    Template:
+      Count: 5
+    Users:
+      Count: 4
+
+  - Name: OrgC
+    Domain: orgC.example.com
+    EnableNodeOUs: true
+    Template:
+      Count: 5
+    Users:
+      Count: 4
+
+  - Name: OrgD
+    Domain: orgD.example.com
+    EnableNodeOUs: true
+    Template:
+      Count: 6
+    Users:
+      Count: 5

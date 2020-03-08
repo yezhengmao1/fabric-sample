@@ -1,0 +1,223 @@
+Organizations:
+    - &OrdererOrg
+        Name: OrdererOrg
+        ID: OrdererMSP
+        MSPDir: crypto-config/ordererOrganizations/example.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrdererMSP.admin')"
+                
+    - &OrgA
+        Name: OrgAMSP
+        ID: OrgAMSP
+        MSPDir: crypto-config/peerOrganizations/orgA.example.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrgAMSP.admin', 'OrgAMSP.peer', 'OrgAMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrgAMSP.admin', 'OrgAMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrgAMSP.admin')"
+        AnchorPeers:
+            - Host: peer0.orgA.example.com
+              Port: 7051
+              
+    - &OrgB
+        Name: OrgBMSP
+        ID: OrgBMSP
+        MSPDir: crypto-config/peerOrganizations/orgB.example.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrgBMSP.admin', 'OrgBMSP.peer', 'OrgBMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrgBMSP.admin', 'OrgBMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrgBMSP.admin')"
+        AnchorPeers:
+            - Host: peer0.orgB.example.com
+              Port: 8051
+
+    - &OrgC
+        Name: OrgCMSP
+        ID: OrgCMSP
+        MSPDir: crypto-config/peerOrganizations/orgC.example.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrgCMSP.admin', 'OrgCMSP.peer', 'OrgCMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrgCMSP.admin', 'OrgCMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrgCMSP.admin')"
+        AnchorPeers:
+            - Host: peer0.orgC.example.com
+              Port: 9051
+
+    - &OrgD
+        Name: OrgDMSP
+        ID: OrgDMSP
+        MSPDir: crypto-config/peerOrganizations/orgD.example.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrgDMSP.admin', 'OrgDMSP.peer', 'OrgDMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrgDMSP.admin', 'OrgDMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrgDMSP.admin')"
+        AnchorPeers:
+            - Host: peer0.orgC.example.com
+              Port: 10051
+
+Capabilities:
+    Channel: &ChannelCapabilities
+        V1_4_3: true
+        V1_3: false
+        V1_1: false
+
+    Orderer: &OrdererCapabilities
+        V1_4_2: true
+        V1_1: false
+
+    Application: &ApplicationCapabilities
+        V1_4_2: true
+        V1_3: false
+        V1_2: false
+        V1_1: false
+
+Application: &ApplicationDefaults
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+    Capabilities:
+        <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+    OrdererType: solo
+    Addresses:
+        - orderer.example.com:7050
+    BatchTimeout: 2s
+    BatchSize:
+        MaxMessageCount: 10
+        AbsoluteMaxBytes: 99 MB
+        PreferredMaxBytes: 512 KB
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        BlockValidation:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+
+
+Channel: &ChannelDefaults
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+    Capabilities:
+        <<: *ChannelCapabilities
+
+
+Profiles:
+    Genesis:
+        <<: *ChannelDefaults
+        Orderer:
+            <<: *OrdererDefaults
+            Organizations:
+                - *OrdererOrg
+            Capabilities:
+                <<: *OrdererCapabilities
+        Consortiums:
+            SampleConsortium:
+                Organizations:
+                    - *OrgA
+                    - *OrgB
+                    - *OrgC
+                    - *OrgD
+     
+    ChannelABCD:
+        Consortium: SampleConsortium
+        <<: *ChannelDefaults
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *OrgA
+                - *OrgB
+                - *OrgC
+                - *OrgD
+            Capabilities:
+                <<: *ApplicationCapabilities
+
+    ChannelBC:
+         Consortium: SampleConsortium
+         <<: *ChannelDefaults
+         Application:
+             <<: *ApplicationDefaults
+             Organizations:
+                 - *OrgB
+                 - *OrgC
+             Capabilities:
+                 <<: *ApplicationCapabilities   
+        
+    ChannelBCD:
+         Consortium: SampleConsortium
+         <<: *ChannelDefaults
+         Application:
+             <<: *ApplicationDefaults
+             Organizations:
+                 - *OrgB
+                 - *OrgC
+                 - *OrgD
+             Capabilities:
+                 <<: *ApplicationCapabilities
+                 
+    ChannelCD:
+         Consortium: SampleConsortium
+         <<: *ChannelDefaults
+         Application:
+             <<: *ApplicationDefaults
+             Organizations:
+                 - *OrgC
+                 - *OrgD
+             Capabilities:
+                 <<: *ApplicationCapabilities
+

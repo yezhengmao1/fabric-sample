@@ -1,0 +1,217 @@
+version: '2'
+
+networks:
+  mc:
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+          gateway: 172.22.0.1
+
+services:
+  orderer.example.com:
+    extends:
+      file:   base/docker-compose-base.yaml
+      service: orderer.example.com
+    container_name: orderer.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.2
+
+  peer0.orgA.example.com:
+    container_name: peer0.orgA.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.orgA.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.3
+
+  peer0.orgB.example.com:
+    container_name: peer0.orgB.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.orgB.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.4
+
+  peer1.orgB.example.com:
+    container_name: peer1.orgB.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.orgB.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.5
+
+  peer2.orgB.example.com:
+    container_name: peer2.orgB.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer2.orgB.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.6
+        
+  peer3.orgB.example.com:
+    container_name: peer3.orgB.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer3.orgB.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.7
+
+  peer4.orgB.example.com:
+    container_name: peer4.orgB.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer4.orgB.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.8
+
+  peer0.orgC.example.com:
+    container_name: peer0.orgC.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.orgC.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.9
+
+  peer1.orgC.example.com:
+    container_name: peer1.orgC.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.orgC.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.10
+
+  peer2.orgC.example.com:
+    container_name: peer2.orgC.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer2.orgC.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.11
+
+  peer3.orgC.example.com:
+    container_name: peer3.orgC.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer3.orgC.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.12
+
+  peer4.orgC.example.com:
+    container_name: peer4.orgC.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer4.orgC.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.13
+
+  peer0.orgD.example.com:
+    container_name: peer0.orgD.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.orgD.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.14
+
+  peer1.orgD.example.com:
+    container_name: peer1.orgD.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.orgD.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.15
+
+  peer2.orgD.example.com:
+    container_name: peer2.orgD.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer2.orgD.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.16
+
+  peer3.orgD.example.com:
+    container_name: peer3.orgD.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer3.orgD.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.17
+
+  peer4.orgD.example.com:
+    container_name: peer4.orgD.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer4.orgD.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.18
+
+  peer5.orgD.example.com:
+    container_name: peer5.orgD.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer5.orgD.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.19
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:$IMAGETAG
+    tty: true
+    stdin_open: true
+    environment:
+      - SYS_CHANNEL=sys_channel
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.orgA.example.com:7051
+      - CORE_PEER_LOCALMSPID=OrgAMSP
+      - CORE_PEER_TLS_ENABLED=false
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/orgA.example.com/users/Admin@orgA.example.com/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+        - /var/run/:/host/var/run/
+        - ./../chaincode/:/opt/gopath/src/github.com/chaincode
+        - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+        - ./scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
+        - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
+    depends_on:
+      - orderer.example.com
+      - peer0.orgA.example.com
+      - peer0.orgB.example.com
+      - peer1.orgB.example.com
+      - peer2.orgB.example.com
+      - peer3.orgB.example.com
+      - peer4.orgB.example.com
+      - peer0.orgC.example.com
+      - peer1.orgC.example.com
+      - peer2.orgC.example.com
+      - peer3.orgC.example.com
+      - peer4.orgC.example.com
+      - peer0.orgD.example.com
+      - peer1.orgD.example.com
+      - peer2.orgD.example.com
+      - peer3.orgD.example.com
+      - peer4.orgD.example.com
+      - peer5.orgD.example.com
+    networks:
+      mc:
+        ipv4_address: 172.22.0.20
