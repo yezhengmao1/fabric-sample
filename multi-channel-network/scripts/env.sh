@@ -25,6 +25,27 @@ PEER4ORGDNODE=peer4.orgD.example.com:10091
 PEER5ORGDNODE=peer5.orgD.example.com:10101
 
 CHANNEL_NAME=(channelabcd channelbc channelbcd channelcd)
+CHANNEL_INSTANTIATE=(
+    "AND ('OrgAMSP.peer','OrgBMSP.peer','OrgCMSP.peer','OrgDMSP.peer')"
+    "AND ('OrgBMSP.peer','OrgCMSP.peer')"
+    "AND ('OrgCMSP.peer','OrgDMSP.peer')"
+    "AND ('OrgCMSP.peer','OrgDMSP.peer')"
+    )
+CHANNELABCD=channelabcd
+CHANNELBC=channelbc
+CHANNELBCD=channelbcd
+CHANNELCD=channelcd
+
+
+CHANNEL_A=($CHANNELABCD)
+CHANNEL_B=($CHANNELABCD $CHANNELBC $CHANNELBCD)
+CHANNEL_C=($CHANNELABCD $CHANNELBC $CHANNELBCD $CHANNELCD)
+CHANNEL_D=($CHANNELABCD $CHANNELBCD $CHANNELCD)
+
+OrgA_PEERS=(${PEER0ORGANODE})
+OrgB_PEERS=(${PEER0ORGBNODE} ${PEER1ORGBNODE} ${PEER2ORGBNODE} ${PEER3ORGBNODE} ${PEER4ORGBNODE})
+OrgC_PEERS=(${PEER0ORGCNODE} ${PEER1ORGCNODE} ${PEER2ORGCNODE} ${PEER3ORGCNODE} ${PEER4ORGCNODE})
+OrgD_PEERS=(${PEER0ORGDNODE} ${PEER1ORGDNODE} ${PEER2ORGDNODE} ${PEER3ORGDNODE} ${PEER4ORGDNODE} ${PEER5ORGDNODE})
 
 NAME=money_demo
 VERSION=1.0
@@ -34,7 +55,7 @@ OrgA(){
     CORE_PEER_MSPCONFIGPATH=${PEERROOT}/orgA.example.com/users/Admin@orgA.example.com/msp
     CORE_PEER_ADDRESS=${PEER0ORGANODE}
     CORE_PEER_LOCALMSPID="OrgAMSP"
-    echo "node now:peer0.orga.com"
+    echo "org now: orga; node now:peer0"
 }
 
 # 切换peer0 orgB
@@ -42,7 +63,7 @@ OrgB(){
     CORE_PEER_MSPCONFIGPATH=${PEERROOT}/orgB.example.com/users/Admin@orgB.example.com/msp
     CORE_PEER_ADDRESS=${PEER0ORGBNODE}
     CORE_PEER_LOCALMSPID="OrgBMSP"
-    echo "node now:peer0.orgb.com"
+    echo "org now: orgb; node now:peer0"
 }
 
 # 切换peer0 orgC
@@ -50,7 +71,7 @@ OrgC(){
     CORE_PEER_MSPCONFIGPATH=${PEERROOT}/orgC.example.com/users/Admin@orgC.example.com/msp
     CORE_PEER_ADDRESS=${PEER0ORGCNODE}
     CORE_PEER_LOCALMSPID="OrgCMSP"
-    echo "node now:peer0.orgc.com"
+    echo "org now: orgc; node now:peer0"
 }
 
 # 切换peer0 orgD
@@ -58,7 +79,7 @@ OrgD(){
     CORE_PEER_MSPCONFIGPATH=${PEERROOT}/orgD.example.com/users/Admin@orgD.example.com/msp
     CORE_PEER_ADDRESS=${PEER0ORGDNODE}
     CORE_PEER_LOCALMSPID="OrgDMSP"
-    echo "node now:peer0.orgd.com"
+    echo "org now: orgd; node now:peer0"
 }
 
 # 安装channel
@@ -71,64 +92,162 @@ InstallChannel() {
             -c ${i} \
             -f ./channel-artifacts/${i}.tx
         echo "install channel " ${i} " done !"
-        sleep 3
+        sleep 1
     done
+}
+
+# OrgA加入的channel
+JoinChannelA() {
+	peer channel join -b ${CHANNELABCD}.block
+}
+
+# OrgB加入的channel
+JoinChannelB() {
+	peer channel join -b ${CHANNELABCD}.block
+    peer channel join -b ${CHANNELBC}.block
+    peer channel join -b ${CHANNELBCD}.block
+}
+
+# OrgC加入的channel
+JoinChannelC() {
+	peer channel join -b ${CHANNELABCD}.block
+    peer channel join -b ${CHANNELBC}.block
+    peer channel join -b ${CHANNELBCD}.block
+	peer channel join -b ${CHANNELCD}.block
+}
+
+# OrgD加入的channel
+JoinChannelD() {
+	peer channel join -b ${CHANNELABCD}.block
+    peer channel join -b ${CHANNELBCD}.block
+	peer channel join -b ${CHANNELCD}.block
 }
 
 # 加入channel
 JoinChannel() {
     OrgA
-    peer channel join -b ${CHANNEL_NAME}.block
-    echo "peer0.orga.com join channel" 
+	for i in ${OrgA_PEERS[@]}; do
+        CORE_PEER_ADDRESS=${i}
+        JoinChannelA
+        echo ${i}" join channel"
+	done
     OrgB
-    peer channel join -b ${CHANNEL_NAME}.block
-    echo "peer0.orgb.com join channel"
+    for i in ${OrgB_PEERS[@]}; do
+        CORE_PEER_ADDRESS=${i}
+        JoinChannelB
+        echo ${i}" join channel"
+    done
+    OrgC
+    for i in ${OrgC_PEERS[@]}; do
+        CORE_PEER_ADDRESS=${i}
+        JoinChannelC
+        echo ${i}" join channel"
+    done
+    OrgD
+    for i in ${OrgD_PEERS[@]}; do
+        CORE_PEER_ADDRESS=${i}
+        JoinChannelD
+        echo ${i}" join channel"
+    done
+}
+
+AnchorUpdateA() {
+    for i in ${CHANNEL_A[@]}; do
+        peer channel update \
+            -o ${ORDERERNODE} \
+            -c ${i} \
+            -f ./channel-artifacts/OrgAMSPanchor_${i}.tx
+    done
+}
+
+AnchorUpdateB() {
+    for i in ${CHANNEL_B[@]}; do
+         peer channel update \
+            -o ${ORDERERNODE} \
+            -c ${i} \
+            -f ./channel-artifacts/OrgBMSPanchor_${i}.tx
+    done
+}
+
+AnchorUpdateC() {
+    for i in ${CHANNEL_C[@]}; do
+        peer channel update \
+            -o ${ORDERERNODE} \
+            -c ${i} \
+            -f ./channel-artifacts/OrgCMSPanchor_${i}.tx
+    done
+}
+
+AnchorUpdateD() {
+    for i in ${CHANNEL_D[@]}; do
+        peer channel update \
+            -o ${ORDERERNODE} \
+            -c ${i} \
+            -f ./channel-artifacts/OrgDMSPanchor_${i}.tx
+    done
 }
 
 # 更新锚节点
 AnchorUpdate() {
     OrgA
-    peer channel update \
-        -o ${ORDERERNODE} \
-        -c ${CHANNEL_NAME} \
-        -f ./channel-artifacts/OrgAMSPanchor.tx \
-    echo "orga update anchor peer0.orga.com"
+    AnchorUpdateA
     OrgB
-    peer channel update \
-        -o ${ORDERERNODE} \
-        -c ${CHANNEL_NAME} \
-        -f ./channel-artifacts/OrgBMSPanchor.tx \
-    echo "orgb update anchor peer0.orgb.com"
+    AnchorUpdateB
+    OrgC
+    AnchorUpdateC
+    OrgD
+    AnchorUpdateD
+}
+
+InstallChainCodeFunc() {
+    peer chaincode install \
+        -n ${NAME} \
+        -v ${VERSION} \
+        -p github.com/chaincode/demo/
 }
 
 # 安装链码
 InstallChainCode() {
     OrgA
-    peer chaincode install \
-        -n ${NAME} \
-        -v ${VERSION} \
-        -p github.com/chaincode/demo/
-    echo "peer0.orga.com install chaincode - demo"
-
+    for i in ${OrgA_PEERS[@]}; do
+        CORE_PEER_ADDRESS=${i}
+        InstallChainCodeFunc
+        echo ${i}
+    done
     OrgB
-    peer chaincode install \
-        -n ${NAME} \
-        -v ${VERSION} \
-        -p github.com/chaincode/demo/
-    echo "peer0.orgb.com install chaincode - demo"
+    for i in ${OrgB_PEERS[@]}; do
+        CORE_PEER_ADDRESS=${i}
+        InstallChainCodeFunc
+        echo ${i}
+    done
+    OrgC
+    for i in ${OrgC_PEERS[@]}; do
+        CORE_PEER_ADDRESS=${i}
+        InstallChainCodeFunc
+        echo ${i}
+    done
+    OrgD
+    for i in ${OrgD_PEERS[@]}; do
+        CORE_PEER_ADDRESS=${i}
+        InstallChainCodeFunc
+        echo ${i}
+    done
 }
 
 # 实例链码
 InstantiateChainCode() {
-    peer chaincode instantiate \
-        -o ${ORDERERNODE} \
-        -C ${CHANNEL_NAME} \
-        -n ${NAME} \
-        -v ${VERSION} \
-        -c '{"Args":["Init"]}' \
-        -P "AND ('OrgAMSP.peer','OrgBMSP.peer')"
-    sleep 10
-    echo "instantiate chaincode"
+    OrgC
+    for i in ${!CHANNEL_NAME[@]}; do
+        echo "channel - " ${CHANNEL_NAME[i]}
+        echo "p - " ${CHANNEL_INSTANTIATE[i]}
+        peer chaincode instantiate \
+            -o ${ORDERERNODE} \
+            -C ${CHANNEL_NAME[i]} \
+            -n ${NAME} \
+            -v ${VERSION} \
+            -c '{"Args":["Init"]}' \
+            -P "${CHANNEL_INSTANTIATE[i]}"
+    done
 }
 
 # 链码测试
