@@ -238,8 +238,6 @@ InstallChainCode() {
 InstantiateChainCode() {
     OrgC
     for i in ${!CHANNEL_NAME[@]}; do
-        echo "channel - " ${CHANNEL_NAME[i]}
-        echo "p - " ${CHANNEL_INSTANTIATE[i]}
         peer chaincode instantiate \
             -o ${ORDERERNODE} \
             -C ${CHANNEL_NAME[i]} \
@@ -247,6 +245,9 @@ InstantiateChainCode() {
             -v ${VERSION} \
             -c '{"Args":["Init"]}' \
             -P "${CHANNEL_INSTANTIATE[i]}"
+    done
+    for i in ${CHANNEL_NAME[@]}; do
+        peer chaincode list --instantiated -C ${i}
     done
 }
 
