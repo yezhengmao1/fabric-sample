@@ -245,6 +245,7 @@ InstantiateChainCode() {
             -v ${VERSION} \
             -c '{"Args":["Init"]}' \
             -P "${CHANNEL_INSTANTIATE[i]}"
+        sleep 1
     done
     for i in ${CHANNEL_NAME[@]}; do
         peer chaincode list --instantiated -C ${i}
@@ -255,57 +256,13 @@ InstantiateChainCode() {
 TestDemo() {
     # 创建账户
     peer chaincode invoke \
-        -C ${CHANNEL_NAME} \
+        -C ${CHANNELABCD} \
         -o ${ORDERERNODE} \
         -n ${NAME} \
-        --peerAddresses ${PEERORGANODE} \
-        --peerAddresses ${PEERORGBNODE} \
-        -c '{"Args":["open","count_a", "100"]}'
-    sleep 3
-    peer chaincode invoke \
-        -C ${CHANNEL_NAME} \
-        -o ${ORDERERNODE} \
-        -n ${NAME} \
-        --peerAddresses ${PEERORGANODE} \
-        --peerAddresses ${PEERORGBNODE} \
-        -c '{"Args":["open","count_b", "100"]}'
-    sleep 3
-    peer chaincode query \
-        -C ${CHANNEL_NAME} \
-        -n ${NAME} \
-        -c '{"Args":["query","count_a"]}'
-    peer chaincode query \
-        -C ${CHANNEL_NAME} \
-        -n ${NAME} \
-        -c '{"Args":["query","count_b"]}'
-    peer chaincode invoke \
-        -C ${CHANNEL_NAME} \
-        -o ${ORDERERNODE} \
-        -n ${NAME} \
-        --peerAddresses ${PEERORGANODE} \
-        --peerAddresses ${PEERORGBNODE} \
-        -c '{"Args":["invoke","count_a","count_b","50"]}'
-    sleep 3
-    peer chaincode invoke \
-        -C ${CHANNEL_NAME} \
-        -o ${ORDERERNODE} \
-        -n ${NAME} \
-        --peerAddresses ${PEERORGANODE} \
-        --peerAddresses ${PEERORGBNODE} \
+        --peerAddresses ${PEER0ORGANODE} \
+        --peerAddresses ${PEER0ORGBNODE} \
+        --peerAddresses ${PEER0ORGDNODE} \
         -c '{"Args":["open","count_c", "100"]}'
-    sleep 3
-    peer chaincode query \
-        -C ${CHANNEL_NAME} \
-        -n ${NAME} \
-        -c '{"Args":["query","count_a"]}'
-    peer chaincode query \
-        -C ${CHANNEL_NAME} \
-        -n ${NAME} \
-        -c '{"Args":["query","count_b"]}'
-    peer chaincode query \
-        -C ${CHANNEL_NAME} \
-        -n ${NAME} \
-        -c '{"Args":["query","count_c"]}'
 }
 
 case $1 in
@@ -334,7 +291,7 @@ case $1 in
         AnchorUpdate
         InstallChainCode
         InstantiateChainCode
-        OrgA
+        OrgC
         TestDemo
         ;;
 esac
