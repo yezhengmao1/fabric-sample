@@ -254,6 +254,7 @@ InstantiateChainCode() {
 
 # 链码测试
 TestDemo() {
+    OrgC
     # 创建账户
     peer chaincode invoke \
         -C ${CHANNELABCD} \
@@ -262,7 +263,34 @@ TestDemo() {
         --peerAddresses ${PEER0ORGANODE} \
         --peerAddresses ${PEER0ORGBNODE} \
         --peerAddresses ${PEER0ORGDNODE} \
-        -c '{"Args":["open","count_c", "100"]}'
+        -c '{"Args":["open","count_a", "100"]}'
+    sleep 3
+    peer chaincode invoke \
+        -C ${CHANNELABCD} \
+        -o ${ORDERERNODE} \
+        -n ${NAME} \
+        --peerAddresses ${PEER0ORGANODE} \
+        --peerAddresses ${PEER0ORGBNODE} \
+        --peerAddresses ${PEER0ORGDNODE} \
+        -c '{"Args":["open","count_b", "100"]}'
+    sleep 3
+    peer chaincode invoke \
+        -C ${CHANNELABCD} \
+        -o ${ORDERERNODE} \
+        -n ${NAME} \
+        --peerAddresses ${PEER0ORGANODE} \
+        --peerAddresses ${PEER0ORGBNODE} \
+        --peerAddresses ${PEER0ORGDNODE} \
+        -c '{"Args":["invoke","count_a", "count_b","1"]}'
+    sleep 3
+    peer chaincode query \
+        -C ${CHANNELABCD} \
+        -n ${NAME} \
+        -c '{"Args":["query","count_a"]}'
+    peer chaincode query \
+        -C ${CHANNELABCD} \
+        -n ${NAME} \
+        -c '{"Args":["query","count_b"]}'
 }
 
 case $1 in
@@ -282,7 +310,6 @@ case $1 in
         InstantiateChainCode
         ;;
     testdemo)
-        OrgA
         TestDemo
         ;;
     all)
@@ -291,7 +318,6 @@ case $1 in
         AnchorUpdate
         InstallChainCode
         InstantiateChainCode
-        OrgC
         TestDemo
         ;;
 esac
