@@ -262,27 +262,27 @@ TestDemo() {
         -n ${NAME} \
         --peerAddresses ${PEER0ORGANODE} \
         --peerAddresses ${PEER0ORGBNODE} \
+        --peerAddresses ${PEER0ORGCNODE} \
         --peerAddresses ${PEER0ORGDNODE} \
         -c '{"Args":["open","count_a", "100"]}'
-    sleep 3
     peer chaincode invoke \
         -C ${CHANNELABCD} \
         -o ${ORDERERNODE} \
         -n ${NAME} \
         --peerAddresses ${PEER0ORGANODE} \
         --peerAddresses ${PEER0ORGBNODE} \
+        --peerAddresses ${PEER0ORGCNODE} \
         --peerAddresses ${PEER0ORGDNODE} \
         -c '{"Args":["open","count_b", "100"]}'
-    sleep 3
     peer chaincode invoke \
         -C ${CHANNELABCD} \
         -o ${ORDERERNODE} \
         -n ${NAME} \
         --peerAddresses ${PEER0ORGANODE} \
         --peerAddresses ${PEER0ORGBNODE} \
+        --peerAddresses ${PEER0ORGCNODE} \
         --peerAddresses ${PEER0ORGDNODE} \
         -c '{"Args":["invoke","count_a", "count_b","1"]}'
-    sleep 3
     peer chaincode query \
         -C ${CHANNELABCD} \
         -n ${NAME} \
