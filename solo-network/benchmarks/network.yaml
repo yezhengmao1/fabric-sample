@@ -10,7 +10,7 @@ caliper:
     end: scripts/utils.sh down
 
 info:
-  Version: 1.4.6
+  Version: 1.4.4
   Size: 2 Orgs with 1 Peer
   Orderer: Solo
   Distribution: Single Host

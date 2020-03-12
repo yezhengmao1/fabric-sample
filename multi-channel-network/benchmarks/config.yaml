@@ -1,0 +1,68 @@
+test:
+  name: multi-channel-network
+  description: multi-channel-network
+  workers:
+    type: local
+    number: 4
+
+  rounds:
+  - label: open
+    description: open
+    txNumber: 1000
+    rateControl:
+      type: fixed-rate
+      opts:
+        tps: 100
+    callback: ../chaincode/demo/callback/open.js
+
+  - label: transfer
+    description: transfer
+    txNumber: 1000
+    rateControl:
+      type: fixed-rate
+      opts:
+        tps: 40
+    callback: ../chaincode/demo/callback/transfer.js
+
+  - label: query
+    description: query
+    txNumber: 1000
+    rateControl:
+      type: fixed-rate
+      opts:
+        tps: 100
+    callback: ../chaincode/demo/callback/query.js
+
+  - label: delete
+    description: delete
+    txNumber: 1000
+    rateControl:
+      type: fixed-rate
+      opts:
+        tps: 100
+    callback: ../chaincode/demo/callback/delete.js
+
+monitor:
+  interval: 1
+  type: 
+    - docker
+  docker:
+    containers:
+    - peer0.orgA.example.com
+    - peer0.orgB.example.com
+    - peer1.orgB.example.com
+    - peer2.orgB.example.com
+    - peer3.orgB.example.com
+    - peer4.orgB.example.com
+    - peer0.orgC.example.com
+    - peer1.orgC.example.com
+    - peer2.orgC.example.com
+    - peer3.orgC.example.com
+    - peer4.orgC.example.com
+    - peer0.orgD.example.com
+    - peer1.orgD.example.com
+    - peer2.orgD.example.com
+    - peer3.orgD.example.com
+    - peer4.orgD.example.com
+    - peer5.orgD.example.com
+    - orderer.example.com
