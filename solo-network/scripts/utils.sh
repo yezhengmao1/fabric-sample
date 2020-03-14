@@ -4,7 +4,7 @@ ORGA=orga
 ORGB=orgb
 ORGAUSERS=(Admin User1)
 ORGBUSERS=(Admin User1)
-VERSION=1.4.4
+VERSION=latest
 
 # 复制keystore
 CPFile() {
@@ -44,6 +44,7 @@ case $1 in
         ;;
     down)
         docker kill $(docker ps -qa)
+        docker rmi $(docker images | grep 'dev-*' | awk '{print $3}')
         echo y | docker system prune
         Clean
         ;;
