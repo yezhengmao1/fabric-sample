@@ -4,7 +4,7 @@ ORGA=orga
 ORGB=orgb
 ORGAUSERS=(Admin User1)
 ORGBUSERS=(Admin User1)
-VERSION=latest
+VERSION=1.4.4
 
 # 复制keystore
 CPFile() {
