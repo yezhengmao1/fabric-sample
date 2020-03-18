@@ -1,0 +1,121 @@
+version: '2'
+services:
+  orderer0.yzm.com:
+    container_name: orderer0.yzm.com
+    extends:
+      file: peer-base.yaml
+      service: orderer-base
+    environment:
+        - ORDERER_GENERAL_LISTENPORT=6050
+        - PBFT_LISTEN_PORT=6070
+        - PBFT_NODE_ID=0
+        - PBFT_NODE_TABLE=orderer0.yzm.com:6070;orderer1.yzm.com:6071;orderer2.yzm.com:6072;orderer3.yzm.com:6073
+    volumes:
+        - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+        - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer0.yzm.com/msp:/var/hyperledger/orderer/msp
+        - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer0.yzm.com/tls:/var/hyperledger/orderer/tls
+        - ../production/orderer:/var/hyperledger/production/orderer0
+    ports:
+      - 6050:6050
+      - 6070:6070
+
+  orderer1.yzm.com:
+    container_name: orderer1.yzm.com
+    extends:
+      file: peer-base.yaml
+      service: orderer-base
+    environment:
+        - ORDERER_GENERAL_LISTENPORT=6051
+        - PBFT_LISTEN_PORT=6071
+        - PBFT_NODE_ID=1
+        - PBFT_NODE_TABLE=orderer0.yzm.com:6070;orderer1.yzm.com:6071;orderer2.yzm.com:6072;orderer3.yzm.com:6073
+    volumes:
+        - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+        - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer1.yzm.com/msp:/var/hyperledger/orderer/msp
+        - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer1.yzm.com/tls:/var/hyperledger/orderer/tls
+        - ../production/orderer:/var/hyperledger/production/orderer1
+    ports:
+      - 6051:6051
+      - 6071:6071
+
+  orderer2.yzm.com:
+    container_name: orderer2.yzm.com
+    extends:
+      file: peer-base.yaml
+      service: orderer-base
+    environment:
+        - ORDERER_GENERAL_LISTENPORT=6052
+        - PBFT_LISTEN_PORT=6072
+        - PBFT_NODE_ID=2
+        - PBFT_NODE_TABLE=orderer0.yzm.com:6070;orderer1.yzm.com:6071;orderer2.yzm.com:6072;orderer3.yzm.com:6073
+    volumes:
+        - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+        - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer2.yzm.com/msp:/var/hyperledger/orderer/msp
+        - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer2.yzm.com/tls:/var/hyperledger/orderer/tls
+        - ../production/orderer:/var/hyperledger/production/orderer2
+    ports:
+      - 6052:6052
+      - 6072:6072
+
+  orderer3.yzm.com:
+    container_name: orderer3.yzm.com
+    extends:
+      file: peer-base.yaml
+      service: orderer-base
+    environment:
+        - ORDERER_GENERAL_LISTENPORT=6053
+        - PBFT_LISTEN_PORT=6073
+        - PBFT_NODE_ID=3
+        - PBFT_NODE_TABLE=orderer0.yzm.com:6070;orderer1.yzm.com:6071;orderer2.yzm.com:6072;orderer3.yzm.com:6073
+    volumes:
+        - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+        - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer3.yzm.com/msp:/var/hyperledger/orderer/msp
+        - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer3.yzm.com/tls:/var/hyperledger/orderer/tls
+        - ../production/orderer:/var/hyperledger/production/orderer3
+    ports:
+      - 6053:6053
+      - 6073:6073
+
+  peer0.orga.com:
+    container_name: peer0.orga.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.orga.com
+      - CORE_PEER_ADDRESS=peer0.orga.com:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.orga.com:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orga.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.orga.com:7051
+      - CORE_PEER_LOCALMSPID=OrgAMSP
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/peerOrganizations/orga.com/peers/peer0.orga.com/msp:/etc/hyperledger/fabric/msp
+        - ../crypto-config/peerOrganizations/orga.com/peers/peer0.orga.com/tls:/etc/hyperledger/fabric/tls
+        - ../production/orga:/var/hyperledger/production
+    ports:
+      - 7051:7051
+
+  peer0.orgb.com:
+    container_name: peer0.orgb.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.orgb.com
+      - CORE_PEER_ADDRESS=peer0.orgb.com:8051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:8051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.orgb.com:8052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:8052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.orgb.com:8051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orgb.com:8051
+      - CORE_PEER_LOCALMSPID=OrgBMSP
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/peerOrganizations/orgb.com/peers/peer0.orgb.com/msp:/etc/hyperledger/fabric/msp
+        - ../crypto-config/peerOrganizations/orgb.com/peers/peer0.orgb.com/tls:/etc/hyperledger/fabric/tls
+        - ../production/orgb:/var/hyperledger/production
+    ports:
+      - 8051:8051
