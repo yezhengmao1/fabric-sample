@@ -1,70 +1,52 @@
 package pbft
 
 import (
-	"encoding/json"
-	"net/http"
+	cb "github.com/hyperledger/fabric/protos/common"
+	"time"
 )
 
-const (
-	URL_REQUEST    = "/request"
-	URL_PREPREPARE = "/preprepare"
-	URL_PREPARE    = "/prepare"
-	URL_COMMIT     = "/commit"
-	URL_REPLAY     = "/replay"
-)
-
-func (s *Server) Request(writer http.ResponseWriter, r *http.Request) {
-	var msg RequestMsg
-
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		logger.Infof("Error Type %s", err)
-		return
+func (n *Node) HandleConfig(channelID string, configSeq uint64, msg *cb.Envelope) {
+	var err error
+	seq := n.Support[channelID].Sequence()
+	if configSeq < seq {
+		if msg, _, err = n.Support[channelID].ProcessConfigMsg(msg); err != nil {
+			logger.Info(err)
+		}
 	}
-
-	s.node.MsgBroadcast <- &msg
+	batch := n.Support[channelID].BlockCutter().Cut()
+	if batch != nil {
+		block := n.Support[channelID].CreateNextBlock(batch)
+		n.Support[channelID].WriteBlock(block, nil)
+	}
+	// 写配置
+	block := n.Support[channelID].CreateNextBlock([]*cb.Envelope{msg})
+	n.Support[channelID].WriteConfigBlock(block, nil)
 }
 
-
-func (s *Server) PrePrepare(writer http.ResponseWriter, r *http.Request) {
-	var msg PrePrepareMsg
-
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		logger.Infof("Error Type %s", err)
-		return
+func (n *Node) HandleNormal(channelID string, configSeq uint64, msg *cb.Envelope) {
+	seq := n.Support[channelID].Sequence()
+	if configSeq < seq {
+		if _, err := n.Support[channelID].ProcessNormalMsg(msg); err != nil {
+			logger.Warn(err)
+		}
 	}
-
-	s.node.MsgBroadcast <- &msg
-}
-
-func (s *Server) Prepare(writer http.ResponseWriter, r *http.Request) {
-	var msg PrepareMsg
-
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		logger.Infof("Error Type %s", err)
-		return
+	batches, pending := n.Support[channelID].BlockCutter().Ordered(msg)
+	for _, batch := range batches {
+		block := n.Support[channelID].CreateNextBlock(batch)
+		n.Support[channelID].WriteBlock(block, nil)
 	}
-
-	s.node.MsgBroadcast <- &msg
-}
-
-func (s *Server) Commit(writer http.ResponseWriter, r *http.Request) {
-	var msg CommitMsg
-
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		logger.Infof("Error Type %s", err)
-		return
+	if pending {
+		go func(node *Node, channel string) {
+			timer := time.After(n.Support[channelID].SharedConfig().BatchTimeout())
+			<-timer
+			logger.Info("[PBFT HANDLE] time after to cut block")
+			batch := n.Support[channel].BlockCutter().Cut()
+			if len(batch) == 0 {
+				logger.Warningf("Batch timer expired with no pending requests, this might indicate a bug")
+				return
+			}
+			block := n.Support[channel].CreateNextBlock(batch)
+			n.Support[channel].WriteBlock(block, nil)
+		}(n, channelID)
 	}
-
-	s.node.MsgBroadcast <- &msg
-}
-
-func (s *Server) Reply(writer http.ResponseWriter, r *http.Request) {
-	var msg ReplyMsg
-
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		logger.Infof("Error Type %s", err)
-		return
-	}
-
-	logger.Info("recv reply ", msg)
 }

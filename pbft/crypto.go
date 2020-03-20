@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 )
 
+// 用于加密
+
 func Hash(content []byte) string {
 	h := sha256.New()
 	h.Write(content)
@@ -16,7 +18,7 @@ func Hash(content []byte) string {
 func Digest(obj interface{}) (string, error) {
 	msg, err := json.Marshal(obj)
 	if err != nil {
-		logger.Info("error to json marshal object")
+		logger.Info("[PBFT CRYPTO] error to json marshal object")
 		return "", err
 	}
 	return Hash(msg), nil

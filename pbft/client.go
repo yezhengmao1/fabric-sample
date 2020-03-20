@@ -6,64 +6,58 @@ import (
 	"net/http"
 )
 
-// 发送请求
+// 发送消息请求
 func Send(url string, msg []byte) error {
 	buff := bytes.NewBuffer(msg)
-
 	if _, err := http.Post("http://" + url, "application/json", buff); err != nil {
 		logger.Infof("POST ERROR %s", err)
 		return err
 	}
-
 	return nil
 }
 
-func SendReq(url string, req *RequestMsg) error {
+func (n *Node) SendRequest(url string, req *RequestMsg) error {
 	msg, err := json.Marshal(req)
 	if err != nil {
 		logger.Info(err)
 		return err
 	}
-	logger.Infof("Client Send RequestMsg To %s", "http://" + url)
+	logger.Infof("[PBFT Client] send request to %s", "http://" + url)
 	return Send(url + URL_REQUEST, msg)
 }
 
-func SendPrePrepare(url string, preprepare *PrePrepareMsg) error {
-	msg, err := json.Marshal(preprepare)
+func (n *Node) SendPrePrepare(url string, prePrepare *PrePrepareMsg)  {
+	msg, err := json.Marshal(prePrepare)
 	if err != nil {
 		logger.Info(err)
-		return err
 	}
-	logger.Infof("Client Send PrePrepareMsg To %s", "http://" + url)
-	return Send(url + URL_PREPREPARE, msg)
+	logger.Infof("[PBFT Client] send pre-prepare to %s", "http://" + url)
+	_ = Send(url + URL_PREPREPARE, msg)
 }
 
-func SendPrepare(url string, prepare *PrepareMsg) error {
+func (n *Node) SendPrepare(url string, prepare *PrepareMsg)  {
 	msg, err := json.Marshal(prepare)
 	if err != nil {
 		logger.Info(err)
-		return err
 	}
-	logger.Infof("Client Send PrepareMsg To %s", "http://" + url)
-	return Send(url + URL_PREPARE, msg)
+	logger.Infof("[PBFT Client] send prepare to %s", "http://" + url)
+	_ = Send(url + URL_PREPARE, msg)
 }
 
-func SendCommit(url string, commit *CommitMsg) error {
+func (n *Node) SendCommit(url string, commit *CommitMsg)  {
 	msg, err := json.Marshal(commit)
 	if err != nil {
 		logger.Info(err)
-		return err
 	}
-	logger.Infof("Client Send CommitMsg To %s", "http://" + url)
-	return Send(url + URL_COMMIT, msg)
+	logger.Infof("[PBFT Client] send commit to %s", "http://" + url)
+	_ = Send(url + URL_COMMIT, msg)
 }
 
-func SendReply(url string, reply *ReplyMsg) error {
+func (n *Node) SendReply(url string, reply *ReplyMsg) {
 	msg, err := json.Marshal(reply)
 	if err != nil {
 		logger.Info(err)
-		return err
 	}
-	logger.Infof("Client Send Reply To %s", "http://" + url)
-	return Send(url + URL_REPLAY, msg)
+	logger.Infof("[PBFT Client] send reply to %s", "http://" + url)
+	_ = Send(url + URL_REPLAY, msg)
 }

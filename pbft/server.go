@@ -1,94 +1,94 @@
 package pbft
 
 import (
-	"context"
-	"github.com/hyperledger/fabric/orderer/consensus"
+	"encoding/json"
 	"net/http"
-	"os"
 	"strconv"
-	"strings"
 )
 
-// 测试
-var GServer *Server = nil
+// 服务器 - 接收消息
+const (
+	URL_REQUEST    = "/request"
+	URL_PREPREPARE = "/preprepare"
+	URL_PREPARE    = "/prepare"
+	URL_COMMIT     = "/commit"
+	URL_REPLAY     = "/replay"
+)
 
 // http 协议接收请求
-type Server struct {
-	port   int			  // 监听端口
-	node   *Node	      // 节点
-	server *http.Server
-}
-
-// 注册服务器和节点
-func NewServer(support consensus.ConsenterSupport) *Server {
-	// 配置读取
-	var err error
-	var nodeID     int					// 节点id
-	var port       int					// 监听端口
-	var nodeTable  map[uint64]string	// 监听表
-
-	nodeTable = make(map[uint64]string)
-
-	rawNodeID := os.Getenv("PBFT_NODE_ID")
-	rawTable  := os.Getenv("PBFT_NODE_TABLE")
-	rawPort   := os.Getenv("PBFT_LISTEN_PORT")
-	// 节点ID
-	if nodeID, err = strconv.Atoi(rawNodeID); err != nil {
-		logger.Errorf("node id set error %s", rawNodeID)
-		return nil
-	}
-	// 节点表
-	tables := strings.Split(rawTable, ";")
-	for index, t := range tables {
-		nodeTable[uint64(index)] = t
-	}
-	// 节点是否满足 3f + 1
-	if len(tables) < 3 || len(tables) % 3 != 1 {
-		return nil
-	}
-	// 监听端口
-	if port, err = strconv.Atoi(rawPort); err != nil {
-		logger.Errorf("server port set error %s", rawPort)
-		return nil
-	}
-	// 节点注册
-	node := NewNode(uint64(nodeID), nodeTable, support)
-	// 初始化server
-	server := &Server{
-		port: 	 port,
-		node:    node,
-	}
-
-	return server
-}
-
-func (s *Server) Start()  {
-	// 注册接口
-	logger.Infof("PBFT Server will be started at port :%d", s.port)
+func (n *Node) InitServer(port int) {
+	logger.Info("[PBFT Server] Init And Create Node Server")
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc(URL_REQUEST, s.Request)
-	mux.HandleFunc(URL_REPLAY,  s.Reply)
+	mux.HandleFunc(URL_REQUEST,    n.RequestHttp)
+	mux.HandleFunc(URL_REPLAY,     n.ReplyHttp)
+	mux.HandleFunc(URL_PREPREPARE, n.PrePrepareHttp)
+	mux.HandleFunc(URL_PREPARE,    n.PrepareHttp)
+	mux.HandleFunc(URL_COMMIT,     n.CommitHttp)
 
-	mux.HandleFunc(URL_PREPREPARE, s.PrePrepare)
-	mux.HandleFunc(URL_PREPARE,    s.Prepare)
-	mux.HandleFunc(URL_COMMIT,     s.Commit)
+	n.Server = &http.Server{Addr: ":" + strconv.Itoa(port), Handler: mux}
+}
 
-	s.server = &http.Server{Addr: ":" + strconv.Itoa(s.port), Handler: mux}
-
-	if err := s.server.ListenAndServe(); err != nil {
-		logger.Infof("Start Server Error %s", err)
+func (n *Node) Listen() {
+	role := ""
+	if n.IsPrimary() {
+		role = "primary"
+	}else {
+		role = "backup"
+	}
+	logger.Infof("[PBFT Server] Listen And Run is %s", role)
+	if err := n.Server.ListenAndServe(); err != nil {
+		logger.Warn(err)
 	}
 }
 
-func (s *Server) Stop() {
-	logger.Info("To Stop Node")
-
-	if err := s.server.Shutdown(context.TODO()); err != nil {
-		logger.Info(err)
+// Request 接口
+func (n *Node) RequestHttp(writer http.ResponseWriter, r *http.Request) {
+	var msg RequestMsg
+	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+		logger.Infof("Error Type %s", err)
+		return
 	}
-	logger.Info("the server shutdown")
+	n.MsgBroadcast <- &msg
+}
 
-	go s.node.StopAllThread()
+// Reply 接口
+func (n *Node) ReplyHttp(writer http.ResponseWriter, r *http.Request) {
+	var msg ReplyMsg
+	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+		logger.Infof("Error Type %s", err)
+		return
+	}
+	logger.Info(msg)
+}
+
+// PrePrepare 接口
+func (n *Node) PrePrepareHttp(writer http.ResponseWriter, r *http.Request) {
+	var msg PrePrepareMsg
+	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+		logger.Infof("Error Type %s", err)
+		return
+	}
+	n.MsgBroadcast <- &msg
+}
+
+// Prepare 接口
+func (n *Node) PrepareHttp(writer http.ResponseWriter, r *http.Request) {
+	var msg PrepareMsg
+	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+		logger.Infof("Error Type %s", err)
+		return
+	}
+	n.MsgBroadcast <- &msg
+}
+
+// Commit 接口
+func (n *Node) CommitHttp(writer http.ResponseWriter, r *http.Request) {
+	var msg CommitMsg
+	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+		logger.Infof("Error Type %s", err)
+		return
+	}
+	n.MsgBroadcast <- &msg
 }
