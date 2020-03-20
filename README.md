@@ -9,59 +9,74 @@
 # 文件说明
 
 ```
-chaincode/demo: 测试chaincode
-solo-network: solo共识配置
+chaincode/demo:       测试 chaincode
+chaincode/callback:   hyperleger/caliper测试用例
+
+pbft:                 可插拔 PBFT 共识算法简单实现
+
+solo-network:          solo共识配置
+pbft-network:          pbft共识配置 
+multi-channel-network: solo多链配置
 ```
 
-## chaincode/demo
+## chaincode 说明
 
-* Init : 无
-* Invoke : 
-  * open - 开户，参数：<"账户名"，"金额">
-  * query - 查询，参数：<"账户名">
-  * invoke - 转账，参数：<"账户名"，"账户名"，"金额">
-  * delete - 销户，参数：<"账户名">
+| 函数 |       功能       |    参数    |
+| :-------: | :--------------: | :--------------------: |
+|  open  | 开户 | 账户名, 金额 |
+|  query  | 查询 | 账户名 |
+|  invoke  | 转账 | 账户名, 账户名, 金额 |
+|  delete  | 销户 | 账户名 |
 
-## solo-network
 
-网络：
+## 网络拓扑 solo-network
 
-```
-orderer:
-	172.22.0.2/orderer.yzm.com:7050
-peer:
-	172.22.0.3/peer0.orga.com:7051
-	172.22.0.4/peer0.orgb.com:8051
-```
+| 类型/组织 |      域名       |     IP/端口     |   组织名   |
+| :-------: | :-------------: | :-------------: | :--------: |
+|  Orderer  | orderer.yzm.com | 172.22.0.2:7050 | OrdererOrg |
+| Peer/OrgA | peer0.orga.com  | 172.22.0.3:7051 |  OrgAMSP   |
+| Peer/OrgB | peer0.orgb.com  | 172.22.0.4:8051 |  OrgBMSP   |
 
-## multi-channel-network
+## 网络拓扑 pbft-network
 
-网络（* - 锚节点）
+| 类型/组织 |       域名       |    IP/端口/PBFT端口    |   组织名   |
+| :-------: | :--------------: | :--------------------: | :--------: |
+|  Orderer  | orderer0.yzm.com | 172.22.0.100:6050/6070 | OrdererOrg |
+|  Orderer  | orderer1.yzm.com | 172.22.0.101:6051/6071 | OrdererOrg |
+|  Orderer  | orderer2.yzm.com | 172.22.0.101:6052/6072 | OrdererOrg |
+|  Orderer  | orderer3.yzm.com | 172.22.0.101:6053/6073 | OrdererOrg |
+| Peer/OrgA |  peer0.orga.com  |    172.22.0.2:7051     |  OrgAMSP   |
+| Peer/OrgB |  peer0.orgb.com  |    172.22.0.3:8051     |  OrgBMSP   |
 
-```
-orderer:
-	172.22.0.2/orderer.example.com:7050
-peer:
-	orga:
-		172.22.0.3/peer0.orgA.example.com:7051(*)
-	orgb:
-		172.22.0.4/peer0.orgB.example.com:8051(*)
-		172.22.0.5/peer1.orgB.example.com:8061
-		172.22.0.6/peer2.orgB.example.com:8071
-		172.22.0.7/peer3.orgB.example.com:8081
-		172.22.0.8/peer4.orgB.example.com:8091
-	orgc:
-		172.22.0.9/peer0.orgC.example.com:9051(*)
-		172.22.0.10/peer1.orgC.example.com:9061
-		172.22.0.11/peer2.orgC.example.com:9071
-		172.22.0.12/peer3.orgC.example.com:9081
-		172.22.0.13/peer4.orgC.example.com:9091
-	orgd:
-		172.22.0.14/peer0.orgD.example.com:10051(*)
-		172.22.0.15/peer1.orgD.example.com:10061
-		172.22.0.16/peer2.orgD.example.com:10071
-		172.22.0.17/peer3.orgD.example.com:10081
-		172.22.0.18/peer4.orgD.example.com:10091
-		172.22.0.19/peer5.orgD.example.com:10101
-```
 
+## 网络拓扑 multi-channel-network
+
+| 类型/组织 |          域名           | IP/端口/PBFT端口 |   组织名   |
+| :-------: | :---------------------: | :--------------: | :--------: |
+|  Orderer  |   orderer.example.com   | 172.22.0.2:7050  | OrdererOrg |
+| Peer/OrgA | peer0.orgA.example.com | 172.22.0.3:7051  |  OrgAMSP   |
+
+| 类型/组织 |          域名           | IP/端口/PBFT端口 |   组织名   |
+| :-------: | :---------------------: | :--------------: | :--------: |
+| Peer/OrgB | peer0.orgB.example.com | 172.22.0.4:8051  |  OrgBMSP   |
+| Peer/OrgB | peer1.orgB.example.com | 172.22.0.5:8061  |  OrgBMSP   |
+| Peer/OrgB | peer2.orgB.example.com | 172.22.0.6:8071  |  OrgBMSP   |
+| Peer/OrgB | peer3.orgB.example.com | 172.22.0.7:8081  |  OrgBMSP   |
+| Peer/OrgB | peer4.orgB.example.com | 172.22.0.8:8091  |  OrgBMSP   |
+
+| 类型/组织 |          域名           | IP/端口/PBFT端口 |   组织名   |
+| :-------: | :---------------------: | :--------------: | :--------: |
+| Peer/OrgC | peer0.orgC.example.com | 172.22.0.9:9051  |  OrgCMSP   |
+| Peer/OrgC | peer1.orgC.example.com | 172.22.0.10:9061  |  OrgCMSP   |
+| Peer/OrgC | peer2.orgC.example.com | 172.22.0.11:9071  |  OrgCMSP   |
+| Peer/OrgC | peer3.orgC.example.com | 172.22.0.12:9081  |  OrgCMSP   |
+| Peer/OrgC | peer4.orgC.example.com | 172.22.0.13:9091  |  OrgCMSP   |
+
+| 类型/组织 |          域名           | IP/端口/PBFT端口 |   组织名   |
+| :-------: | :---------------------: | :--------------: | :--------: |
+| Peer/OrgD | peer0.orgD.example.com | 172.22.0.14:10051  |  OrgDMSP   |
+| Peer/OrgD | peer1.orgD.example.com | 172.22.0.15:10061  |  OrgDMSP   |
+| Peer/OrgD | peer2.orgD.example.com | 172.22.0.16:10071  |  OrgDMSP   |
+| Peer/OrgD | peer3.orgD.example.com | 172.22.0.17:10081  |  OrgDMSP   |
+| Peer/OrgD | peer4.orgD.example.com | 172.22.0.18:10091  |  OrgDMSP   |
+| Peer/OrgD | peer5.orgD.example.com | 172.22.0.19:10101  |  OrgDMSP   |
