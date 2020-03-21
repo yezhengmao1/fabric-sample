@@ -28,7 +28,7 @@ type PrePrepareMsg struct {
 	View       int   		 `json:"view"`
 	Sequence   int64  		 `json:"sequence"`
 	Digest     string		 `json:"digest"`
-	Msg        *RequestMsg   `json:"message"`
+	Msg        []*RequestMsg `json:"message"`
 }
 
 // Prepare消息

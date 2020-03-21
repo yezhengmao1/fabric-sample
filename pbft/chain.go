@@ -74,7 +74,7 @@ func (ch *Chain) Order(env *cb.Envelope, configSeq uint64) error {
 			ConfigSeq: configSeq,
 			Type:      TYPE_NORMAL,
 		},
-		TimeStamp: time.Now().Unix(),
+		TimeStamp: time.Now().UnixNano(),
 		ClientID:  ch.node.Id,
 	}
 	return ch.node.SendRequest(ch.node.GetPrimaryUrl(), req)
@@ -96,7 +96,7 @@ func (ch *Chain) Configure(config *cb.Envelope, configSeq uint64) error {
 			ConfigSeq: configSeq,
 			Type:      TYPE_CONFIG,
 		},
-		TimeStamp: time.Now().Unix(),
+		TimeStamp: time.Now().UnixNano(),
 		ClientID:  ch.node.Id,
 	}
 	return ch.node.SendRequest(ch.node.GetPrimaryUrl(), req)

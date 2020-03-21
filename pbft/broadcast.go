@@ -1,16 +1,20 @@
 package pbft
 
 import (
-	"sort"
 	"time"
 )
 
-const TimeDuration = time.Second
+const TimeDuration  = time.Microsecond * 500
+const BatchDuration = time.Second
+const BatchLen      = 500
 
 // 接收消息 - 监听接口
 func (n *Node) BroadCastMsg() {
 	var timer <-chan time.Time
+	var batchTimer <-chan time.Time
+
 	timer = time.After(TimeDuration)
+	batchTimer = time.After(BatchDuration)
 
 	logger.Info("[PBFT BroadCast] start broadcast thread")
 	for {
@@ -18,7 +22,15 @@ func (n *Node) BroadCastMsg() {
 		case msg := <-n.MsgBroadcast:
 			switch msg.(type) {
 			case *RequestMsg:
-				n.HandleStageNonePrimary(msg.(*RequestMsg))
+				// 缓冲请求,定量打包,配置打包
+				if msg.(*RequestMsg).TimeStamp <= n.LastTimeStamp {
+					logger.Infof("[PBFT BroadCast] recv expire request")
+					return
+				}
+				n.Buffer.requestMsgs = append(n.Buffer.requestMsgs, msg.(*RequestMsg))
+				if len(n.Buffer.requestMsgs) > BatchLen || msg.(*RequestMsg).Ops.Type == TYPE_CONFIG {
+					n.HandleStageNonePrimary(nil)
+				}
 			case *PrePrepareMsg:
 				n.HandleStageNoneBackup(msg.(*PrePrepareMsg))
 			case *PrepareMsg:
@@ -34,26 +46,23 @@ func (n *Node) BroadCastMsg() {
 			logger.Info("[PBFT BroadCast] stop broadcast thread")
 			return
 
+		case <-batchTimer:
+			batchTimer = nil
+			// 定时打包
+			if len(n.Buffer.requestMsgs) > 0 {
+				n.HandleStageNonePrimary(nil)
+			}
+			batchTimer = time.After(BatchDuration)
+
 		case <-timer:
 			timer = nil
 			// 处理缓存
 			switch n.Stage {
 			case STAGE_None:
-				// 请求排序 - 主 / 备
-				if n.IsPrimary() {
-					msg := n.Buffer.requestMsgs
-					n.Buffer.requestMsgs = make([]*RequestMsg, 0)
-					sort.Sort(msg)
-					for _, m := range msg {
-						n.HandleStageNonePrimary(m)
-					}
-				} else {
-					msg := n.Buffer.prePrepareMsgs
-					n.Buffer.prePrepareMsgs = make([]*PrePrepareMsg, 0)
-					sort.Sort(msg)
-					for _, m := range msg {
-						n.HandleStageNoneBackup(m)
-					}
+				msg := n.Buffer.prePrepareMsgs
+				n.Buffer.prePrepareMsgs = make([]*PrePrepareMsg, 0)
+				for _, m := range msg {
+					n.HandleStageNoneBackup(m)
 				}
 			case STAGE_PrePrepared:
 				msg := n.Buffer.prepareMsgs
@@ -73,8 +82,10 @@ func (n *Node) BroadCastMsg() {
 				n.PrePareMsgLog  = make(map[int]*PrepareMsg)
 				logger.Infof("[PBFT COMMIT] change lastSequence to prev:[%d] now:[%d]", n.LastSequence, n.CurrentRequest.Sequence)
 				n.LastSequence   = n.CurrentRequest.Sequence
-				n.LastTimeStamp  = n.CurrentRequest.Msg.TimeStamp
+				n.LastTimeStamp  = n.CurrentRequest.Msg[len(n.CurrentRequest.Msg) - 1].TimeStamp
+				n.HandleReq      = n.HandleReq + int64(len(n.CurrentRequest.Msg))
 				n.CurrentRequest = nil
+				logger.Infof("[PBFT COMMIT] now handle request num [%d]", n.HandleReq)
 				n.Stage = STAGE_None
 			}
 			timer = time.After(TimeDuration)

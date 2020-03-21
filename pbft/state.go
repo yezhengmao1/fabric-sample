@@ -15,28 +15,19 @@ const (
 )
 
 // 打包缓存
-func (n *Node) GetRequest() *RequestMsg {
-	msg := make(RequestMsgBuffer, 0)
-	// 获取时间戳满足条件请求 - 其余放回缓存
-	for _, m := range n.Buffer.requestMsgs {
-		if m.TimeStamp <= n.LastTimeStamp {
-			logger.Infof("[PBFT PRIMARY] recv expire request [%d]", m.TimeStamp)
-			continue
-		}
-		msg = append(msg, m)
-	}
+func (n *Node) BatchRequest() []*RequestMsg {
+	msg := n.Buffer.requestMsgs
 	// 排序
+	n.Buffer.requestMsgs = make([]*RequestMsg, 0)
 	if len(msg) == 0 {
-		n.Buffer.requestMsgs = make(RequestMsgBuffer, 0)
 		return nil
 	}
-	sort.Sort(msg)
-	n.Buffer.requestMsgs = msg[1:]
-	return msg[0]
+	sort.Sort(RequestMsgBuffer(msg))
+	return msg
 }
 
 // 产生 pre-prepare 请求
-func (n *Node) GeneratePrePrepareMsg(req *RequestMsg) *PrePrepareMsg {
+func (n *Node) GeneratePrePrepareMsg(req []*RequestMsg) *PrePrepareMsg {
 	digest, err := Digest(req)
 	if err != nil {
 		return nil
@@ -72,17 +63,7 @@ func (n *Node) GenerateCommitMsg(msg *PrepareMsg) *CommitMsg {
 // 产生 reply 请求
 func (n *Node) GenerateReplyMsg(msg *CommitMsg) *ReplyMsg {
 	// 执行请求
-	Ops := n.CurrentRequest.Msg.Ops
-	switch Ops.Type {
-	case TYPE_NORMAL:
-		logger.Infof("[PBFT PPREPARE -> COMMIT] channel %s to execute normal op [%d]", Ops.ChannelID, n.CurrentRequest.Msg.TimeStamp)
-		n.HandleNormal(Ops.ChannelID, Ops.ConfigSeq, Ops.Envelope)
-		logger.Infof("[PBFT PPREPARE -> COMMIT] channel %s execute normal op [%d] success", Ops.ChannelID, n.CurrentRequest.Msg.TimeStamp)
-	case TYPE_CONFIG:
-		logger.Infof("[PBFT PPREPARE -> COMMIT] channel %s to execute config op [%d]", Ops.ChannelID, n.CurrentRequest.Msg.TimeStamp)
-		n.HandleConfig(Ops.ChannelID, Ops.ConfigSeq, Ops.Envelope)
-		logger.Infof("[PBFT PPREPARE -> COMMIT] channel %s execute config op [%d] success", Ops.ChannelID, n.CurrentRequest.Msg.TimeStamp)
-	}
+	n.MsgHandle <- n.CurrentRequest
 	return &ReplyMsg{
 		View:      n.View,
 		TimeStamp: time.Now().Unix(),
@@ -145,31 +126,31 @@ func (n *Node) VerifyCommitMsg(msg *CommitMsg) bool {
 }
 
 // 状态机
+// 只能在 STAGE_NONE 时被调用
 func (n *Node) HandleStageNonePrimary(msg *RequestMsg) {
-	if n.Stage != STAGE_None {
-		// 缓存请求
-		logger.Infof("[PBFT BroadCast] buffer request [%d]", msg.TimeStamp)
+	logger.Infof("[PBFT BroadCast] ready to batch request buffer len(%d)", len(n.Buffer.requestMsgs))
+	if msg != nil { // 缓存启动
 		n.Buffer.requestMsgs = append(n.Buffer.requestMsgs, msg)
-	} else {
-		logger.Info("[PBFT BroadCast] ready to get request")
-		n.Buffer.requestMsgs = append(n.Buffer.requestMsgs, msg)
-		req := n.GetRequest()
-		if req == nil {
-			logger.Warn("[PBFT IDEL] get nil request")
-			return
-		}
-		prePrepare := n.GeneratePrePrepareMsg(req)
-		if prePrepare == nil {
-			logger.Warn("[PBFT IDEL] generate pre-prepare message error")
-			return
-		}
-		// 广播 - 状态变化
-		logger.Infof("[PBFT IDEL -> PREPREPARE] log current request batch request [%d]", prePrepare.Msg.TimeStamp)
-		n.CurrentRequest = prePrepare
-		logger.Info("[PBFT IDEL -> PREPREPARE] ready to delivery pre-prepare msg")
-		n.MsgDelivery <- prePrepare
-		n.Stage = STAGE_PrePrepared
 	}
+	// 打包请求
+	req := n.BatchRequest()
+	if req == nil {
+		logger.Warn("[PBFT IDEL] get nil request")
+		return
+	}
+	logger.Infof("[PBFT IDEL] get request batch len - (%d)", len(req))
+	prePrepare := n.GeneratePrePrepareMsg(req)
+	if prePrepare == nil {
+		logger.Warn("[PBFT IDEL] generate pre-prepare message error")
+		return
+	}
+	// 广播 - 状态变化
+	logger.Infof("[PBFT IDEL -> PREPREPARE] log current request batch request [%d - %d]",
+		prePrepare.Msg[0].TimeStamp, prePrepare.Msg[len(prePrepare.Msg)-1].TimeStamp)
+	n.CurrentRequest = prePrepare
+	logger.Info("[PBFT IDEL -> PREPREPARE] ready to delivery pre-prepare msg")
+	n.MsgDelivery <- prePrepare
+	n.Stage = STAGE_PrePrepared
 }
 
 func (n *Node) HandleStageNoneBackup(msg *PrePrepareMsg) {
@@ -260,6 +241,7 @@ func (n *Node) HandleStagePrepare(msg *CommitMsg) {
 			logger.Warnf("[PBFT PPREPARE] recv warn commit msg [%d]", msg.Sequence)
 			return
 		}
+
 		// 记录日志
 		n.CommitMsgLog[msg.ID] = msg
 		if len(n.CommitMsgLog) < 2*n.FNum {
@@ -268,6 +250,7 @@ func (n *Node) HandleStagePrepare(msg *CommitMsg) {
 		}
 		// 节点数足够
 		logger.Infof("[PBFT PPREPARE -> COMMIT] vote to the msg [%d] success!", msg.Sequence)
+
 		// 执行
 		reply := n.GenerateReplyMsg(msg)
 

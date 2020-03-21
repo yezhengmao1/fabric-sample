@@ -2,8 +2,43 @@ package pbft
 
 import (
 	cb "github.com/hyperledger/fabric/protos/common"
-	"time"
 )
+
+func (n *Node) HandleThread() {
+	logger.Info("[PBFT HANDLE] start handle thread")
+	for {
+		select {
+		case req := <-n.MsgHandle:
+			n.HandleBatchMsg(req.Msg)
+
+		case <-n.ExitHandle:
+			logger.Info("[PBFT HANDLE] exit handle thread")
+			return
+		}
+	}
+}
+
+func (n *Node) HandleBatchMsg(req []*RequestMsg) {
+	pending := make(map[string]bool)
+	for _, r := range req {
+		switch r.Ops.Type {
+		case TYPE_NORMAL:
+			pending[r.Ops.ChannelID] = n.HandleNormal(r.Ops.ChannelID, r.Ops.ConfigSeq, r.Ops.Envelope)
+		case TYPE_CONFIG:
+			n.HandleConfig(r.Ops.ChannelID, r.Ops.ConfigSeq, r.Ops.Envelope)
+		}
+	}
+	// 直接打包多余交易
+	for k, v := range pending {
+		if v {
+			batch := n.Support[k].BlockCutter().Cut()
+			if batch != nil {
+				block := n.Support[k].CreateNextBlock(batch)
+				n.Support[k].WriteBlock(block, nil)
+			}
+		}
+	}
+}
 
 func (n *Node) HandleConfig(channelID string, configSeq uint64, msg *cb.Envelope) {
 	var err error
@@ -23,7 +58,7 @@ func (n *Node) HandleConfig(channelID string, configSeq uint64, msg *cb.Envelope
 	n.Support[channelID].WriteConfigBlock(block, nil)
 }
 
-func (n *Node) HandleNormal(channelID string, configSeq uint64, msg *cb.Envelope) {
+func (n *Node) HandleNormal(channelID string, configSeq uint64, msg *cb.Envelope) bool {
 	seq := n.Support[channelID].Sequence()
 	if configSeq < seq {
 		if _, err := n.Support[channelID].ProcessNormalMsg(msg); err != nil {
@@ -35,18 +70,5 @@ func (n *Node) HandleNormal(channelID string, configSeq uint64, msg *cb.Envelope
 		block := n.Support[channelID].CreateNextBlock(batch)
 		n.Support[channelID].WriteBlock(block, nil)
 	}
-	if pending {
-		go func(node *Node, channel string) {
-			timer := time.After(n.Support[channelID].SharedConfig().BatchTimeout())
-			<-timer
-			logger.Info("[PBFT HANDLE] time after to cut block")
-			batch := n.Support[channel].BlockCutter().Cut()
-			if len(batch) == 0 {
-				logger.Warningf("Batch timer expired with no pending requests, this might indicate a bug")
-				return
-			}
-			block := n.Support[channel].CreateNextBlock(batch)
-			n.Support[channel].WriteBlock(block, nil)
-		}(n, channelID)
-	}
+	return pending
 }

@@ -26,6 +26,7 @@ type Node struct {
 	Stage         Stage          // 当前状态
 	LastSequence  int64          // 最后处理序号
 	LastTimeStamp int64			 // 最后处理时间戳
+	HandleReq     int64			 // 处理请求数
 	FNum          int            // 3f + 1
 
 	Buffer *MsgBuffer    // 缓存
@@ -37,11 +38,13 @@ type Node struct {
 
 	MsgBroadcast chan interface{} // 消息接收
 	MsgDelivery  chan interface{} // 消息分发
+	MsgHandle    chan *PrePrepareMsg
 
 	Support       map[string]consensus.ConsenterSupport
 
 	ExitBroadCast chan bool
 	ExitDelivery  chan bool
+	ExitHandle    chan bool
 }
 
 func NewNode(support consensus.ConsenterSupport) *Node {
@@ -74,6 +77,7 @@ func NewNode(support consensus.ConsenterSupport) *Node {
 		Stage:         STAGE_None,
 		LastSequence:  -1,
 		LastTimeStamp: -1,
+		HandleReq:     0,
 		FNum:          len(table) / 3,
 
 		Buffer: &MsgBuffer{
@@ -90,11 +94,13 @@ func NewNode(support consensus.ConsenterSupport) *Node {
 
 		MsgBroadcast: make(chan interface{}),
 		MsgDelivery:  make(chan interface{}),
+		MsgHandle:    make(chan *PrePrepareMsg, 100),
 
 		Support:      make(map[string]consensus.ConsenterSupport),
 
 		ExitBroadCast: make(chan bool),
 		ExitDelivery:  make(chan bool),
+		ExitHandle:    make(chan bool),
 	}
 
 	node.Support[support.ChainID()] = support
@@ -120,6 +126,8 @@ func (n *Node) Run() {
 	go n.BroadCastMsg()
 	// 消息分发
 	go n.DeliveryMsg()
+	// 消息处理队列
+	go n.HandleThread()
 }
 
 // 停止节点
@@ -131,4 +139,6 @@ func (n *Node) Stop() {
 	n.ExitBroadCast <- true
 	logger.Info("[PBFT NODE] ready to close delivery thread")
 	n.ExitDelivery  <- true
+	logger.Info("[PBFT NODE] ready to close handle thread")
+	n.ExitHandle <- true
 }
