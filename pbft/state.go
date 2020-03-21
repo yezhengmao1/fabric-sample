@@ -64,6 +64,7 @@ func (n *Node) GenerateCommitMsg(msg *PrepareMsg) *CommitMsg {
 func (n *Node) GenerateReplyMsg(msg *CommitMsg) *ReplyMsg {
 	// 执行请求
 	n.MsgHandle <- n.CurrentRequest
+
 	return &ReplyMsg{
 		View:      n.View,
 		TimeStamp: time.Now().Unix(),
@@ -257,6 +258,15 @@ func (n *Node) HandleStagePrepare(msg *CommitMsg) {
 		logger.Info("[PBFT PPREPARE -> COMMIT] ready to delivery reply msg")
 		n.MsgDelivery <- reply
 
-		n.Stage = STAGE_Commited
+		// 下一阶段
+		n.CommitMsgLog   = make(map[int]*CommitMsg)
+		n.PrePareMsgLog  = make(map[int]*PrepareMsg)
+		logger.Infof("[PBFT COMMIT] change lastSequence to prev:[%d] now:[%d]", n.LastSequence, n.CurrentRequest.Sequence)
+		n.LastSequence   = n.CurrentRequest.Sequence
+		n.LastTimeStamp  = n.CurrentRequest.Msg[len(n.CurrentRequest.Msg) - 1].TimeStamp
+		n.HandleReq      = n.HandleReq + int64(len(n.CurrentRequest.Msg))
+		n.CurrentRequest = nil
+		logger.Infof("[PBFT COMMIT] now handle request num [%d]", n.HandleReq)
+		n.Stage = STAGE_None
 	}
 }

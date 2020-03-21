@@ -28,7 +28,7 @@ func (n *Node) BroadCastMsg() {
 					return
 				}
 				n.Buffer.requestMsgs = append(n.Buffer.requestMsgs, msg.(*RequestMsg))
-				if len(n.Buffer.requestMsgs) > BatchLen || msg.(*RequestMsg).Ops.Type == TYPE_CONFIG {
+				if n.Stage == STAGE_None && ( len(n.Buffer.requestMsgs) > BatchLen || msg.(*RequestMsg).Ops.Type == TYPE_CONFIG ) {
 					n.HandleStageNonePrimary(nil)
 				}
 			case *PrePrepareMsg:
@@ -48,9 +48,11 @@ func (n *Node) BroadCastMsg() {
 
 		case <-batchTimer:
 			batchTimer = nil
-			// 定时打包
-			if len(n.Buffer.requestMsgs) > 0 {
-				n.HandleStageNonePrimary(nil)
+			if n.Stage == STAGE_None {
+				// 定时打包
+				if len(n.Buffer.requestMsgs) > 0 {
+					n.HandleStageNonePrimary(nil)
+				}
 			}
 			batchTimer = time.After(BatchDuration)
 
@@ -76,17 +78,6 @@ func (n *Node) BroadCastMsg() {
 				for _, m := range msg {
 					n.HandleStagePrepare(m)
 				}
-			case STAGE_Commited:
-				// 资源回收
-				n.CommitMsgLog   = make(map[int]*CommitMsg)
-				n.PrePareMsgLog  = make(map[int]*PrepareMsg)
-				logger.Infof("[PBFT COMMIT] change lastSequence to prev:[%d] now:[%d]", n.LastSequence, n.CurrentRequest.Sequence)
-				n.LastSequence   = n.CurrentRequest.Sequence
-				n.LastTimeStamp  = n.CurrentRequest.Msg[len(n.CurrentRequest.Msg) - 1].TimeStamp
-				n.HandleReq      = n.HandleReq + int64(len(n.CurrentRequest.Msg))
-				n.CurrentRequest = nil
-				logger.Infof("[PBFT COMMIT] now handle request num [%d]", n.HandleReq)
-				n.Stage = STAGE_None
 			}
 			timer = time.After(TimeDuration)
 		}

@@ -7,6 +7,8 @@ ORDEROOT=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrgani
 # 节点设置
 ORDERER0NODE=orderer0.yzm.com:6050
 ORDERER1NODE=orderer1.yzm.com:6051
+ORDERER2NODE=orderer2.yzm.com:6052
+ORDERER3NODE=orderer3.yzm.com:6053
 
 ORDERERNODE=${ORDERER1NODE}
 
@@ -107,7 +109,7 @@ TestDemo() {
         --peerAddresses ${PEERORGANODE} \
         --peerAddresses ${PEERORGBNODE} \
         -c '{"Args":["open","count_a", "100"]}'
-    sleep 3
+    sleep 10
     peer chaincode invoke \
         -C ${CHANNEL_NAME} \
         -o ${ORDERERNODE} \
@@ -115,7 +117,7 @@ TestDemo() {
         --peerAddresses ${PEERORGANODE} \
         --peerAddresses ${PEERORGBNODE} \
         -c '{"Args":["open","count_b", "100"]}'
-    sleep 3
+    sleep 10
     peer chaincode query \
         -C ${CHANNEL_NAME} \
         -n ${NAME} \
@@ -139,6 +141,14 @@ TestDemo() {
         --peerAddresses ${PEERORGANODE} \
         --peerAddresses ${PEERORGBNODE} \
         -c '{"Args":["open","count_c", "100"]}'
+    sleep 3
+    peer chaincode invoke \
+        -C ${CHANNEL_NAME} \
+        -o ${ORDERER3NODE} \
+        -n ${NAME} \
+        --peerAddresses ${PEERORGANODE} \
+        --peerAddresses ${PEERORGBNODE} \
+        -c '{"Args":["invoke","count_a","count_c","10"]}'
     sleep 3
     peer chaincode query \
         -C ${CHANNEL_NAME} \

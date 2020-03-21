@@ -44,6 +44,7 @@ case $1 in
         ;;
     down)
         docker kill $(docker ps -qa)
+        echo y | docker system prune
         docker rmi $(docker images | grep 'dev-*' | awk '{print $3}')
         echo y | docker system prune
         Clean
