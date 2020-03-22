@@ -47,6 +47,18 @@ type Chain interface {
 }
 ```
 
+* 编译产生 orderer 镜像（修改`orderer\peer\tools` tag 为 `pbft`）
+
+```
+$ make orderer-docker
+```
+
+* 编译产生 configtxgen 工具（输出目录：`.build/bin/configtxgen`）
+
+```
+$ make configtxgen
+```
+
 ## 二、网络拓扑
 
 | 类型/组织 |       域名       |    IP/端口/PBFT端口    |   组织名   |
@@ -58,7 +70,9 @@ type Chain interface {
 | Peer/OrgA |  peer0.orga.com  |    172.22.0.2:7051     |  OrgAMSP   |
 | Peer/OrgB |  peer0.orgb.com  |    172.22.0.3:8051     |  OrgBMSP   |
 
-## 三、环境变量说明
+## 三、配置说明
+
+采用环境变量：
 
 * `PBFT_LISTEN_PORT`：PBFT 节点监听端口
 * `PBFT_NODE_ID`：PBFT 节点 ID
