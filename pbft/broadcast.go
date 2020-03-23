@@ -4,9 +4,12 @@ import (
 	"time"
 )
 
-const TimeDuration  = time.Microsecond * 500
-const BatchDuration = time.Second
-const BatchLen      = 500
+// 扫描缓冲时间
+const TimeDuration    = time.Microsecond * 500
+// 交易打包时间
+const BatchDuration   = time.Second
+// 交易打包数量
+const BatchLen        = 1000
 
 // 接收消息 - 监听接口
 func (n *Node) BroadCastMsg() {
@@ -22,15 +25,16 @@ func (n *Node) BroadCastMsg() {
 		case msg := <-n.MsgBroadcast:
 			switch msg.(type) {
 			case *RequestMsg:
-				// 缓冲请求,定量打包,配置打包
+				// 缓冲请求, 定量打包
 				if msg.(*RequestMsg).TimeStamp <= n.LastTimeStamp {
-					logger.Infof("[PBFT BroadCast] recv expire request")
-					return
+					logger.Warn("[PBFT BroadCast] recv expire request")
+					continue
 				}
 				n.Buffer.requestMsgs = append(n.Buffer.requestMsgs, msg.(*RequestMsg))
 				if n.Stage == STAGE_None && ( len(n.Buffer.requestMsgs) > BatchLen || msg.(*RequestMsg).Ops.Type == TYPE_CONFIG ) {
 					n.HandleStageNonePrimary(nil)
 				}
+
 			case *PrePrepareMsg:
 				n.HandleStageNoneBackup(msg.(*PrePrepareMsg))
 			case *PrepareMsg:
@@ -47,6 +51,7 @@ func (n *Node) BroadCastMsg() {
 			return
 
 		case <-batchTimer:
+			// 定时打包
 			batchTimer = nil
 			if n.Stage == STAGE_None {
 				// 定时打包
@@ -61,10 +66,12 @@ func (n *Node) BroadCastMsg() {
 			// 处理缓存
 			switch n.Stage {
 			case STAGE_None:
-				msg := n.Buffer.prePrepareMsgs
-				n.Buffer.prePrepareMsgs = make([]*PrePrepareMsg, 0)
-				for _, m := range msg {
-					n.HandleStageNoneBackup(m)
+				if !n.IsPrimary() {
+					msg := n.Buffer.prePrepareMsgs
+					n.Buffer.prePrepareMsgs = make([]*PrePrepareMsg, 0)
+					for _, m := range msg {
+						n.HandleStageNoneBackup(m)
+					}
 				}
 			case STAGE_PrePrepared:
 				msg := n.Buffer.prepareMsgs
