@@ -28,7 +28,6 @@ func (n *Node) HandleBatchMsg(req []*RequestMsg) {
 			n.HandleConfig(r.Ops.ChannelID, r.Ops.ConfigSeq, r.Ops.Envelope)
 		}
 	}
-	// 直接打包多余交易
 	for k, v := range pending {
 		if v {
 			batch := n.Support[k].BlockCutter().Cut()

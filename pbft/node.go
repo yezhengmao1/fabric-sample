@@ -32,12 +32,12 @@ type Node struct {
 	Buffer *MsgBuffer    // 缓存
 	Commit []*RequestMsg // 已处理请求
 
-	CurrentRequest *PrePrepareMsg // 当前处理请求
+	CurrentRequest *PrePrepareMsg 		// 当前处理请求
 	PrePareMsgLog  map[int]*PrepareMsg
 	CommitMsgLog   map[int]*CommitMsg
 
-	MsgBroadcast chan interface{} // 消息接收
-	MsgDelivery  chan interface{} // 消息分发
+	MsgBroadcast chan interface{} 		// 消息接收
+	MsgDelivery  chan interface{} 		// 消息分发
 	MsgHandle    chan *PrePrepareMsg
 
 	Support       map[string]consensus.ConsenterSupport

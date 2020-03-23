@@ -1,12 +1,15 @@
 package pbft
 
-import cb "github.com/hyperledger/fabric/protos/common"
+import (
+	cb "github.com/hyperledger/fabric/protos/common"
+)
 
 // 消息json封装
 const (
 	TYPE_NORMAL = "normal"
 	TYPE_CONFIG = "config"
 )
+
 
 // 操作定义
 type Operation struct {
