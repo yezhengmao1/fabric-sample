@@ -32,24 +32,6 @@ Organizations:
             - Host: peer0.orga.com
               Port: 7051
 
-    - &OrgB
-        Name: OrgBMSP
-        ID: OrgBMSP
-        MSPDir: crypto-config/peerOrganizations/orgb.com/msp
-        Policies:
-            Readers:
-                Type: Signature
-                Rule: "OR('OrgBMSP.admin', 'OrgBMSP.peer', 'OrgBMSP.client')"
-            Writers:
-                Type: Signature
-                Rule: "OR('OrgBMSP.admin', 'OrgBMSP.client')"
-            Admins:
-                Type: Signature
-                Rule: "OR('OrgBMSP.admin')"
-        AnchorPeers:
-            - Host: peer0.orgb.com
-              Port: 8051
-
 Capabilities:
     Channel: &ChannelCapabilities
         V1_4_3: true
@@ -93,8 +75,8 @@ Orderer: &OrdererDefaults
 
     BatchTimeout: 2s
     BatchSize:
-        MaxMessageCount: 200
-        AbsoluteMaxBytes: 99 MB
+        MaxMessageCount: 1000
+        AbsoluteMaxBytes: 256 MB
         PreferredMaxBytes: 512 KB
 
     Organizations:
@@ -140,7 +122,6 @@ Profiles:
             SampleConsortium:
                 Organizations:
                     - *OrgA
-                    - *OrgB
     Channel:
         Consortium: SampleConsortium
         <<: *ChannelDefaults
@@ -148,6 +129,5 @@ Profiles:
             <<: *ApplicationDefaults
             Organizations:
                 - *OrgA
-                - *OrgB
             Capabilities:
                 <<: *ApplicationCapabilities

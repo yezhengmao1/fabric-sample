@@ -16,11 +16,3 @@ PeerOrgs:
       Count: 1
     Users:
       Count: 1
-
-  - Name: OrgB
-    Domain: orgb.com
-    EnableNodeOUs: true
-    Template:
-      Count: 1
-    Users:
-      Count: 1

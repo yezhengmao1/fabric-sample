@@ -54,15 +54,6 @@ services:
       solonet:
         ipv4_address: 172.22.0.2
 
-  peer0.orgb.com:
-    container_name: peer0.orgb.com
-    extends:
-      file:  base/docker-compose-base.yaml
-      service: peer0.orgb.com
-    networks:
-      solonet:
-        ipv4_address: 172.22.0.3
-
   cli:
     container_name: cli
     image: hyperledger/fabric-tools:$IMAGETAG
@@ -92,7 +83,6 @@ services:
       - orderer2.yzm.com
       - orderer3.yzm.com
       - peer0.orga.com
-      - peer0.orgb.com
     networks:
       solonet:
         ipv4_address: 172.22.0.200

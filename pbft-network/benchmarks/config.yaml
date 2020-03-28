@@ -49,7 +49,6 @@ monitor:
   docker:
     containers:
     - peer0.orga.com
-    - peer0.orgb.com
     - orderer0.yzm.com
     - orderer1.yzm.com
     - orderer2.yzm.com

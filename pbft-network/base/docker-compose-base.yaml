@@ -9,7 +9,7 @@ services:
         - ORDERER_GENERAL_LISTENPORT=6050
         - PBFT_LISTEN_PORT=6070
         - PBFT_NODE_ID=0
-        - PBFT_NODE_TABLE=orderer0.yzm.com:6070;orderer1.yzm.com:6071;orderer2.yzm.com:6072;orderer3.yzm.com:6073
+        - PBFT_NODE_TABLE=http://orderer0.yzm.com:6070;http://orderer1.yzm.com:6071;http://orderer2.yzm.com:6072;http://orderer3.yzm.com:6073
     volumes:
         - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
         - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer0.yzm.com/msp:/var/hyperledger/orderer/msp
@@ -28,7 +28,7 @@ services:
         - ORDERER_GENERAL_LISTENPORT=6051
         - PBFT_LISTEN_PORT=6071
         - PBFT_NODE_ID=1
-        - PBFT_NODE_TABLE=orderer0.yzm.com:6070;orderer1.yzm.com:6071;orderer2.yzm.com:6072;orderer3.yzm.com:6073
+        - PBFT_NODE_TABLE=http://orderer0.yzm.com:6070;http://orderer1.yzm.com:6071;http://orderer2.yzm.com:6072;http://orderer3.yzm.com:6073
     volumes:
         - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
         - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer1.yzm.com/msp:/var/hyperledger/orderer/msp
@@ -47,7 +47,7 @@ services:
         - ORDERER_GENERAL_LISTENPORT=6052
         - PBFT_LISTEN_PORT=6072
         - PBFT_NODE_ID=2
-        - PBFT_NODE_TABLE=orderer0.yzm.com:6070;orderer1.yzm.com:6071;orderer2.yzm.com:6072;orderer3.yzm.com:6073
+        - PBFT_NODE_TABLE=http://orderer0.yzm.com:6070;http://orderer1.yzm.com:6071;http://orderer2.yzm.com:6072;http://orderer3.yzm.com:6073
     volumes:
         - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
         - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer2.yzm.com/msp:/var/hyperledger/orderer/msp
@@ -66,7 +66,7 @@ services:
         - ORDERER_GENERAL_LISTENPORT=6053
         - PBFT_LISTEN_PORT=6073
         - PBFT_NODE_ID=3
-        - PBFT_NODE_TABLE=orderer0.yzm.com:6070;orderer1.yzm.com:6071;orderer2.yzm.com:6072;orderer3.yzm.com:6073
+        - PBFT_NODE_TABLE=http://orderer0.yzm.com:6070;http://orderer1.yzm.com:6071;http://orderer2.yzm.com:6072;http://orderer3.yzm.com:6073
     volumes:
         - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
         - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer3.yzm.com/msp:/var/hyperledger/orderer/msp
@@ -97,25 +97,3 @@ services:
         - ../production/orga:/var/hyperledger/production
     ports:
       - 7051:7051
-
-  peer0.orgb.com:
-    container_name: peer0.orgb.com
-    extends:
-      file: peer-base.yaml
-      service: peer-base
-    environment:
-      - CORE_PEER_ID=peer0.orgb.com
-      - CORE_PEER_ADDRESS=peer0.orgb.com:8051
-      - CORE_PEER_LISTENADDRESS=0.0.0.0:8051
-      - CORE_PEER_CHAINCODEADDRESS=peer0.orgb.com:8052
-      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:8052
-      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.orgb.com:8051
-      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orgb.com:8051
-      - CORE_PEER_LOCALMSPID=OrgBMSP
-    volumes:
-        - /var/run/:/host/var/run/
-        - ../crypto-config/peerOrganizations/orgb.com/peers/peer0.orgb.com/msp:/etc/hyperledger/fabric/msp
-        - ../crypto-config/peerOrganizations/orgb.com/peers/peer0.orgb.com/tls:/etc/hyperledger/fabric/tls
-        - ../production/orgb:/var/hyperledger/production
-    ports:
-      - 8051:8051

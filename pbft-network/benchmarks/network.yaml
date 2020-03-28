@@ -29,18 +29,6 @@ clients:
       clientSignedCert:
         path: crypto-config/peerOrganizations/orga.com/users/User1@orga.com/msp/signcerts/User1@orga.com-cert.pem
 
-  peer0.orgb.com:
-    client:
-      organization: OrgB
-      credentialStore:
-        path: /tmp/crypto/orgb
-        cryptoStore:
-          path: /tmp/crypto/orgb
-      clientPrivateKey:
-        path: crypto-config/peerOrganizations/orgb.com/users/User1@orgb.com/msp/keystore/key.pem
-      clientSignedCert:
-        path: crypto-config/peerOrganizations/orgb.com/users/User1@orgb.com/msp/signcerts/User1@orgb.com-cert.pem
-
 channels:
   mychannel:
     configBinary: ./channel-artifacts/channel.tx
@@ -56,8 +44,6 @@ channels:
         chaincodeQuery: true
         ledgerQuery: true
         eventSource: true
-      peer0.orgb.com:
-        eventSource: true
 
     chaincodes:
     - id: money_demo
@@ -67,7 +53,6 @@ channels:
       path: ../chaincode/demo
       targetPeers:
       - peer0.orga.com
-      - peer0.orgb.com
 
 organizations:
   OrgA:
@@ -78,15 +63,6 @@ organizations:
       path: crypto-config/peerOrganizations/orga.com/users/Admin@orga.com/msp/keystore/key.pem
     signedCert:
       path: crypto-config/peerOrganizations/orga.com/users/Admin@orga.com/msp/signcerts/Admin@orga.com-cert.pem
-
-  OrgB:
-    mspid: OrgBMSP
-    peers:
-    - peer0.orgb.com
-    adminPrivateKey:
-      path: crypto-config/peerOrganizations/orgb.com/users/Admin@orgb.com/msp/keystore/key.pem
-    signedCert:
-      path: crypto-config/peerOrganizations/orgb.com/users/Admin@orgb.com/msp/signcerts/Admin@orgb.com-cert.pem
 
 orderers:
   orderer0.yzm.com:
@@ -109,10 +85,5 @@ orderers:
 peers:
   peer0.orga.com:
     url: grpc://localhost:7051
-    grpcOptions:
-      grpc.keepalive_time_ms: 600000
-
-  peer0.orgb.com:
-    url: grpc://localhost:8051
     grpcOptions:
       grpc.keepalive_time_ms: 600000

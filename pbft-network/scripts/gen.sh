@@ -8,7 +8,7 @@ VERSION=1.4.4
 
 FABRIC_CFG_PATH=$PWD
 
-ORG_NAMES=(OrgAMSP OrgBMSP)
+ORG_NAMES=(OrgAMSP)
 
 # 检测cryptogen和版本
 if ! [ -x "$(command -v cryptogen)" ] ; then

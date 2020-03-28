@@ -1,9 +1,7 @@
 #!/bin/bash
 
 ORGA=orga
-ORGB=orgb
 ORGAUSERS=(Admin User1)
-ORGBUSERS=(Admin User1)
 VERSION=pbft
 
 # 复制keystore
@@ -22,9 +20,6 @@ CPAllFiles() {
     for u in ${ORGAUSERS[@]}; do
         CPFile ${PREFIX}/${ORGA}.com/users/${u}@${ORGA}.com/${SUFFIX}
     done
-    for u in ${ORGBUSERS[@]}; do
-        CPFile ${PREFIX}/${ORGB}.com/users/${u}@${ORGB}.com/${SUFFIX}
-    done
 }
 
 # 清理缓存文件
@@ -37,9 +32,14 @@ Clean() {
 
 case $1 in
     # 压力测试启动/关闭
+    cli)
+        env IMAGETAG=${VERSION} docker-compose -f ./docker-compose-cli.yaml up -d
+        docker exec -ti cli /bin/bash
+        ;;
     up)
         CPAllFiles
         env IMAGETAG=${VERSION} docker-compose -f ./docker-compose-cli.yaml up -d
+        sleep 3
         docker exec cli /bin/bash -c "scripts/env.sh all"
         ;;
     down)
