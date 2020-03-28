@@ -8,11 +8,11 @@ test:
   rounds:
   - label: open
     description: open
-    txNumber: 1000
+    txNumber: 2000
     rateControl:
       type: fixed-rate
       opts:
-        tps: 100
+        tps: 200
     callback: ../chaincode/demo/callback/open.js
 
   - label: transfer
@@ -21,25 +21,25 @@ test:
     rateControl:
       type: fixed-rate
       opts:
-        tps: 40
+        tps: 200
     callback: ../chaincode/demo/callback/transfer.js
 
   - label: query
     description: query
-    txNumber: 1000
+    txNumber: 2000
     rateControl:
       type: fixed-rate
       opts:
-        tps: 100
+        tps: 200
     callback: ../chaincode/demo/callback/query.js
 
   - label: delete
     description: delete
-    txNumber: 1000
+    txNumber: 2000
     rateControl:
       type: fixed-rate
       opts:
-        tps: 100
+        tps: 200
     callback: ../chaincode/demo/callback/delete.js
 
 monitor:
