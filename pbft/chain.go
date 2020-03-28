@@ -3,6 +3,9 @@ package pbft
 import (
 	"fmt"
 	"github.com/hyperledger/fabric/orderer/consensus"
+	"github.com/hyperledger/fabric/orderer/consensus/pbft/cmd"
+	"github.com/hyperledger/fabric/orderer/consensus/pbft/message"
+	"github.com/hyperledger/fabric/orderer/consensus/pbft/node"
 	cb "github.com/hyperledger/fabric/protos/common"
 	"time"
 )
@@ -10,23 +13,23 @@ import (
 type Chain struct {
 	exitChan    chan struct{}
 	support     consensus.ConsenterSupport
-	node        *Node
+	pbftNode	*node.Node
 }
 
 func NewChain(support consensus.ConsenterSupport) *Chain {
 	// 创建PBFT服务器
 	logger.Info("NewChain - ", support.ChainID())
-	if GNode == nil {
-		GNode = NewNode(support)
-		GNode.Run()
+	if node.GNode == nil {
+		node.GNode = node.NewNode(cmd.ReadConfig(), support)
+		node.GNode.Run()
 	} else {
-		GNode.AddChain(support)
+		node.GNode.RegisterChain(support)
 	}
 
 	c := &Chain{
 		exitChan: make(chan struct{}),
 		support:  support,
-		node:	  GNode,
+		pbftNode: node.GNode,
 	}
 	return c
 }
@@ -67,17 +70,18 @@ func (ch *Chain) Order(env *cb.Envelope, configSeq uint64) error {
 	default:
 
 	}
-	req := &RequestMsg{
-		Ops: 	   &Operation{
+	req := &message.Request{
+		Op:        message.Operation{
 			Envelope:  env,
 			ChannelID: ch.support.ChainID(),
 			ConfigSeq: configSeq,
-			Type:      TYPE_NORMAL,
+			Type:      message.TYPENORMAL,
 		},
-		TimeStamp: time.Now().UnixNano(),
-		ClientID:  ch.node.Id,
+		TimeStamp: message.TimeStamp(time.Now().UnixNano()),
+		ID:        0,
 	}
-	return ch.node.SendRequest(ch.node.GetPrimaryUrl(), req)
+	ch.pbftNode.SendPrimary(req)
+	return nil
 }
 
 // 接收配置
@@ -89,16 +93,16 @@ func (ch *Chain) Configure(config *cb.Envelope, configSeq uint64) error {
 		return fmt.Errorf("Exiting")
 	default:
 	}
-	req := &RequestMsg{
-		Ops:       &Operation{
+	req := &message.Request{
+		Op:        message.Operation{
 			Envelope:  config,
 			ChannelID: ch.support.ChainID(),
 			ConfigSeq: configSeq,
-			Type:      TYPE_CONFIG,
+			Type:      message.TYPECONFIG,
 		},
-		TimeStamp: time.Now().UnixNano(),
-		ClientID:  ch.node.Id,
+		TimeStamp: message.TimeStamp(time.Now().UnixNano()),
+		ID:        0,
 	}
-	return ch.node.SendRequest(ch.node.GetPrimaryUrl(), req)
+	ch.pbftNode.SendPrimary(req)
+	return nil
 }
-
