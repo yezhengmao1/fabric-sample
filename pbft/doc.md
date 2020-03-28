@@ -68,7 +68,6 @@ $ make configtxgen
 |  Orderer  | orderer2.yzm.com | 172.22.0.101:6052/6072 | OrdererOrg |
 |  Orderer  | orderer3.yzm.com | 172.22.0.101:6053/6073 | OrdererOrg |
 | Peer/OrgA |  peer0.orga.com  |    172.22.0.2:7051     |  OrgAMSP   |
-| Peer/OrgB |  peer0.orgb.com  |    172.22.0.3:8051     |  OrgBMSP   |
 
 ## 三、配置说明
 
