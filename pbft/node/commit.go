@@ -8,7 +8,7 @@ import (
 func (n *Node) commitRecvThread() {
 	for {
 		select {
-		case msg := <-n.commit:
+		case msg := <-n.commitRecv:
 			if !n.checkCommitMsg(msg) {
 				continue
 			}
@@ -20,14 +20,6 @@ func (n *Node) commitRecvThread() {
 			}
 		}
 	}
-}
-
-func (n *Node) readytoExecute(digest string) {
-	// buffer to ExcuteQueue
-	n.buffer.AppendToExecuteQueue(n.buffer.FetchPreprepareMsg(digest))
-	// notify ExcuteThread
-	n.executeNum.Dec()
-	n.executeNotify<-true
 }
 
 func (n *Node) checkCommitMsg(msg *message.Commit) bool {

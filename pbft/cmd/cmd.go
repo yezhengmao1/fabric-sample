@@ -18,8 +18,9 @@ type SharedConfig struct {
 	Table		   map[message.Identify]string
 	FaultNum	   uint
 	ExecuteMaxNum  int
-	WaterL         uint64
-	WaterH		   uint64
+	CheckPointNum  message.Sequence
+	WaterL         message.Sequence
+	WaterH		   message.Sequence
 }
 
 func ReadConfig() *SharedConfig {
@@ -46,8 +47,9 @@ func ReadConfig() *SharedConfig {
 		Table:         t,
 		FaultNum:      uint(len(t)/3),
 		ExecuteMaxNum: 1,
+		CheckPointNum: 200,
 		WaterL:        0,
-		WaterH:		   10000,
+		WaterH:		   400,
 	}
 }
 

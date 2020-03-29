@@ -40,5 +40,14 @@ func (s *HttpServer) HttpCommit(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[Http Error] %s", err)
 		return
 	}
-	s.commit <- &msg
+	s.commitRecv <- &msg
+}
+
+func (s *HttpServer) HttpCheckPoint(w http.ResponseWriter, r *http.Request) {
+	var msg message.CheckPoint
+	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+		log.Printf("[Http Error] %s", err)
+		return
+	}
+	s.checkPointRecv <- &msg
 }

@@ -9,10 +9,11 @@ import (
 )
 
 const (
-	RequestEntry    = "/request"
-	PrePrepareEntry = "/preprepare"
-	PrepareEntry    = "/prepare"
-	CommitEntry     = "/commit"
+	RequestEntry     = "/request"
+	PrePrepareEntry  = "/preprepare"
+	PrepareEntry     = "/prepare"
+	CommitEntry      = "/commit"
+	CheckPointEntry  = "/checkpoint"
 )
 
 // http 监听请求
@@ -23,7 +24,8 @@ type HttpServer struct {
 	requestRecv    chan *message.Request
 	prePrepareRecv chan *message.PrePrepare
 	prepareRecv    chan *message.Prepare
-	commit         chan *message.Commit
+	commitRecv     chan *message.Commit
+	checkPointRecv chan *message.CheckPoint
 }
 
 func NewServer(cfg *cmd.SharedConfig) *HttpServer {
@@ -37,12 +39,13 @@ func NewServer(cfg *cmd.SharedConfig) *HttpServer {
 
 // config server: to register the handle chan
 func (s *HttpServer) RegisterChan(r chan *message.Request, pre chan *message.PrePrepare,
-	p chan *message.Prepare, c chan *message.Commit) {
+	p chan *message.Prepare, c chan *message.Commit, cp chan *message.CheckPoint) {
 	log.Printf("[Server] register the chan for listen func")
 	s.requestRecv    = r
 	s.prePrepareRecv = pre
 	s.prepareRecv    = p
-	s.commit         = c
+	s.commitRecv     = c
+	s.checkPointRecv = cp
 }
 
 func (s *HttpServer) Run() {
@@ -59,6 +62,7 @@ func (s *HttpServer) registerServer() {
 		PrePrepareEntry: s.HttpPrePrepare,
 		PrepareEntry:    s.HttpPrepare,
 		CommitEntry:     s.HttpCommit,
+		CheckPointEntry: s.HttpCheckPoint,
 	}
 
 	mux := http.NewServeMux()

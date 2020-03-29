@@ -7,23 +7,29 @@ import (
 )
 
 type Sequence struct {
-	lastSequence message.Sequence
-	sequence     message.Sequence
-	waterL	     message.Sequence
-	waterH       message.Sequence
-	locker 		 *sync.RWMutex
+	lastSequence  message.Sequence
+	checkSequence message.Sequence
+	stepSequence  message.Sequence
+	sequence      message.Sequence
+	waterL	      message.Sequence
+	waterH        message.Sequence
+	checkLocker   bool
+	locker 		  *sync.RWMutex
 }
 
 func NewSequence(cfg *cmd.SharedConfig) *Sequence {
-	// default sequence start by -1
+	// default sequence start by 0
 	// waterl start by 0
 	// waterh start by 100
 	return &Sequence{
-		lastSequence: -1,
-		sequence:     -1,
-		waterL:       message.Sequence(cfg.WaterL),
-		waterH:       message.Sequence(cfg.WaterH),
-		locker:       new(sync.RWMutex),
+		lastSequence:  0,
+		checkSequence: cfg.CheckPointNum,
+		stepSequence:  cfg.CheckPointNum,
+		sequence:      0,
+		waterL:        message.Sequence(cfg.WaterL),
+		waterH:        message.Sequence(cfg.WaterH),
+		checkLocker:   false,
+		locker:        new(sync.RWMutex),
 	}
 }
 
@@ -56,6 +62,34 @@ func (s *Sequence) SetLastSequence(sequence message.Sequence) {
 func (s *Sequence) GetLastSequence() (ret message.Sequence) {
 	s.locker.RLock()
 	ret = s.lastSequence
+	s.locker.RUnlock()
+	return
+}
+
+func (s *Sequence) GetCheckPoint() (ret message.Sequence) {
+	s.locker.RLock()
+	ret = s.checkSequence
+	s.locker.RUnlock()
+	return
+}
+
+func (s *Sequence) CheckPoint() {
+	s.locker.Lock()
+	s.waterL = s.checkSequence + 1
+	s.checkSequence = s.checkSequence + s.stepSequence
+	s.waterH = s.checkSequence + s.stepSequence * 2
+	s.checkLocker = false
+	s.locker.Unlock()
+	return
+}
+
+func (s *Sequence) ReadyToCheckPoint() (ret bool){
+	ret = false
+	s.locker.RLock()
+	if s.lastSequence >= s.checkSequence && !s.checkLocker {
+		s.checkLocker = true
+		ret = true
+	}
 	s.locker.RUnlock()
 	return
 }

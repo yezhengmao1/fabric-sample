@@ -52,3 +52,7 @@ func (n *Node) IsPrimary() bool {
 	}
 	return false
 }
+
+func StringCalc(a string, b string) string {
+	return ""
+}

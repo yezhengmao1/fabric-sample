@@ -2,6 +2,7 @@ package node
 
 import (
 	"github.com/hyperledger/fabric/orderer/consensus/pbft/message"
+	"github.com/hyperledger/fabric/orderer/consensus/pbft/server"
 	cb "github.com/hyperledger/fabric/protos/common"
 	"log"
 )
@@ -19,6 +20,15 @@ func (n *Node) executeAndReplyThread() {
 				continue
 			}
 			n.sequence.SetLastSequence(lastSeq)
+			// check point
+			if n.sequence.ReadyToCheckPoint() {
+				checkSeq := n.sequence.GetCheckPoint()
+				content, checkPoint := n.buffer.CheckPoint(checkSeq, n.id)
+				// buffer checkpoint
+				n.buffer.BufferCheckPointMsg(checkPoint, n.id)
+				log.Printf("[Reply] ready to create check point to sequence(%d) msg(%s)", checkSeq, checkPoint.Digest[0:9])
+				n.BroadCast(content, server.CheckPointEntry)
+			}
 			// map the digest to request
 			requestBatchs := make([]*message.Request, 0)
 			for _, b := range batchs {

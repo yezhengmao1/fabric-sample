@@ -1,6 +1,7 @@
 package message
 
 import (
+	"encoding/json"
 	"log"
 	"sync"
 )
@@ -23,6 +24,10 @@ type Buffer struct {
 
 	executeQueue  []*PrePrepare
 	executeLocker *sync.RWMutex
+
+	checkPointBuffer map[string]map[Identify]bool
+	checkPointState  map[string]bool
+	checkPointLocker *sync.RWMutex
 }
 
 func NewBuffer() *Buffer {
@@ -44,6 +49,10 @@ func NewBuffer() *Buffer {
 
 		executeQueue:  make([]*PrePrepare, 0),
 		executeLocker: new(sync.RWMutex),
+
+		checkPointBuffer: make(map[string]map[Identify]bool),
+		checkPointState:  make(map[string]bool),
+		checkPointLocker: new(sync.RWMutex),
 	}
 }
 
@@ -77,6 +86,14 @@ func (b *Buffer) BufferPreprepareMsg(msg *PrePrepare) {
 	b.prePrepareLocker.Lock()
 	b.prePrepareBuffer[msg.Digest] = msg
 	b.prePrepareSet[ViewSequenceString(msg.View, msg.Sequence)] = true
+	b.prePrepareLocker.Unlock()
+}
+
+func (b *Buffer) ClearPreprepareMsg(digest string) {
+	b.prePrepareLocker.Lock()
+	msg := b.prePrepareBuffer[digest]
+	delete(b.prePrepareSet, ViewSequenceString(msg.View, msg.Sequence))
+	delete(b.prePrepareBuffer, digest)
 	b.prePrepareLocker.Unlock()
 }
 
@@ -218,4 +235,92 @@ func (b *Buffer) BatchExecute(lastSequence Sequence) ([]*PrePrepare, Sequence) {
 		loop = loop + 1
 		index = index + 1
 	}
+}
+
+// buffer about checkpoint
+func (b *Buffer) CheckPoint(sequence Sequence, id Identify) ([]byte, *CheckPoint) {
+	clearSet := make(map[Sequence]string, 0)
+	minSequence := sequence
+	content := ""
+
+	b.prePrepareLocker.RLock()
+	for k, v := range b.prePrepareBuffer {
+		if v.Sequence <= sequence {
+			clearSet[v.Sequence] = k
+			if v.Sequence < minSequence {
+				minSequence = v.Sequence
+			}
+		}
+	}
+	b.prePrepareLocker.RUnlock()
+
+	for minSequence <= sequence {
+		d := clearSet[minSequence]
+		content = content + d
+		minSequence = minSequence + 1
+	}
+
+	msg := &CheckPoint{
+		Sequence: sequence,
+		Digest:   Hash([]byte(content)),
+		Id:       id,
+	}
+
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return nil, nil
+	}
+	return data, msg
+}
+
+func (b *Buffer) ClearBuffer(msg *CheckPoint) {
+	clearSet := make(map[Sequence]string, 0)
+	minSequence := msg.Sequence
+
+	b.prePrepareLocker.RLock()
+	for k, v := range b.prePrepareBuffer {
+		if v.Sequence <= msg.Sequence{
+			clearSet[v.Sequence] = k
+			if v.Sequence < minSequence {
+				minSequence = v.Sequence
+			}
+		}
+	}
+	b.prePrepareLocker.RUnlock()
+
+	for minSequence <= msg.Sequence {
+		b.ClearPreprepareMsg(clearSet[minSequence])
+		b.ClearPrepareMsg(clearSet[minSequence])
+		b.ClearCommitMsg(clearSet[minSequence])
+		minSequence = minSequence + 1
+	}
+}
+
+func (b *Buffer) BufferCheckPointMsg(msg *CheckPoint, id Identify) {
+	b.checkPointLocker.Lock()
+	if _, ok := b.checkPointBuffer[msg.Digest]; !ok {
+		b.checkPointBuffer[msg.Digest] = make(map[Identify]bool)
+	}
+	b.checkPointBuffer[msg.Digest][id] = true
+	b.checkPointLocker.Unlock()
+}
+
+func (b *Buffer) IsTrueOfCheckPointMsg(digest string, f uint) (ret bool) {
+	ret = false
+	b.checkPointLocker.RLock()
+	num := uint(len(b.checkPointBuffer[digest]))
+	_, ok := b.checkPointState[digest]
+	if num < 2*f || ok {
+		b.checkPointLocker.RUnlock()
+		return
+	}
+	b.checkPointState[digest] = true
+	ret = true
+	b.checkPointLocker.RUnlock()
+	return
+}
+
+func (b *Buffer) Show() {
+	log.Printf("[Buffer] node buffer size: pre-prepare(%d) prepare(%d) commit(%d)",
+		len(b.prePrepareBuffer), len(b.prepareSet), len(b.commitSet))
 }

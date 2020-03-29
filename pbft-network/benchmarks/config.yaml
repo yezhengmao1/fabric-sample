@@ -3,43 +3,43 @@ test:
   description: pbft-network
   workers:
     type: local
-    number: 4
+    number: 5
 
   rounds:
   - label: open
     description: open
-    txNumber: 2000
+    txNumber: 10000
     rateControl:
       type: fixed-rate
       opts:
-        tps: 200
+        tps: 1000
     callback: ../chaincode/demo/callback/open.js
 
   - label: transfer
     description: transfer
-    txNumber: 1000
+    txNumber: 5000
     rateControl:
       type: fixed-rate
       opts:
-        tps: 200
+        tps: 1000
     callback: ../chaincode/demo/callback/transfer.js
 
   - label: query
     description: query
-    txNumber: 2000
+    txNumber: 10000
     rateControl:
       type: fixed-rate
       opts:
-        tps: 200
+        tps: 1000
     callback: ../chaincode/demo/callback/query.js
 
   - label: delete
     description: delete
-    txNumber: 2000
+    txNumber: 10000
     rateControl:
       type: fixed-rate
       opts:
-        tps: 200
+        tps: 1000
     callback: ../chaincode/demo/callback/delete.js
 
 monitor:
