@@ -1,0 +1,89 @@
+name: Fabric
+version: "1.0"
+
+mutual-tls: false
+
+caliper:
+  blockchain: fabric
+  command:
+    start: scripts/gen.sh;scripts/utils.sh up
+    end: scripts/utils.sh
+
+info:
+  Version: 1.4.4
+  Size: 4 Orgs with 2 Peer
+  Orderer: RBFT
+  Distribution: Single Host
+  StateDB: GoLevelDB
+
+clients:
+  peer0.orga.com:
+    client:
+      organization: OrgA
+      credentialStore:
+        path: /tmp/crypto/orga
+        cryptoStore:
+          path: /tmp/crypto/orga
+      clientPrivateKey:
+        path: crypto-config/peerOrganizations/orga.com/users/User1@orga.com/msp/keystore/key.pem
+      clientSignedCert:
+        path: crypto-config/peerOrganizations/orga.com/users/User1@orga.com/msp/signcerts/User1@orga.com-cert.pem
+
+channels:
+  mychannel:
+    configBinary: ./channel-artifacts/channel.tx
+    created: true
+    orderers:
+      - orderer0.yzm.com
+      - orderer1.yzm.com
+      - orderer2.yzm.com
+      - orderer3.yzm.com
+    peers:
+      peer0.orga.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+
+    chaincodes:
+    - id: money_demo
+      version: "1.0"
+      contractID: money_demo
+      language: golang
+      path: ../chaincode/demo
+      targetPeers:
+      - peer0.orga.com
+
+organizations:
+  OrgA:
+    mspid: OrgAMSP
+    peers:
+    - peer0.orga.com
+    adminPrivateKey:
+      path: crypto-config/peerOrganizations/orga.com/users/Admin@orga.com/msp/keystore/key.pem
+    signedCert:
+      path: crypto-config/peerOrganizations/orga.com/users/Admin@orga.com/msp/signcerts/Admin@orga.com-cert.pem
+
+orderers:
+  orderer0.yzm.com:
+    url: grpc://localhost:6050
+    grpcOptions:
+      grpc.keepalive_time_ms: 600000
+  orderer1.yzm.com:
+    url: grpc://localhost:6051
+    grpcOptions:
+      grpc.keepalive_time_ms: 600000
+  orderer2.yzm.com:
+    url: grpc://localhost:6052
+    grpcOptions:
+      grpc.keepalive_time_ms: 600000
+  orderer3.yzm.com:
+    url: grpc://localhost:6053
+    grpcOptions:
+      grpc.keepalive_time_ms: 600000
+
+peers:
+  peer0.orga.com:
+    url: grpc://localhost:7051
+    grpcOptions:
+      grpc.keepalive_time_ms: 600000

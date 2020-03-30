@@ -1,0 +1,88 @@
+version: '2'
+
+networks:
+  solonet:
+    ipam:
+      config:
+        - subnet: 172.22.0.0/24
+          gateway: 172.22.0.1
+
+services:
+
+  orderer0.yzm.com:
+    extends:
+      file:   base/docker-compose-base.yaml
+      service: orderer0.yzm.com
+    container_name: orderer0.yzm.com
+    networks:
+      solonet:
+        ipv4_address: 172.22.0.100
+
+  orderer1.yzm.com:
+    extends:
+      file:   base/docker-compose-base.yaml
+      service: orderer1.yzm.com
+    container_name: orderer1.yzm.com
+    networks:
+      solonet:
+        ipv4_address: 172.22.0.101
+
+  orderer2.yzm.com:
+    extends:
+      file:   base/docker-compose-base.yaml
+      service: orderer2.yzm.com
+    container_name: orderer2.yzm.com
+    networks:
+      solonet:
+        ipv4_address: 172.22.0.102
+
+  orderer3.yzm.com:
+    extends:
+      file:   base/docker-compose-base.yaml
+      service: orderer3.yzm.com
+    container_name: orderer3.yzm.com
+    networks:
+      solonet:
+        ipv4_address: 172.22.0.103
+
+  peer0.orga.com:
+    container_name: peer0.orga.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.orga.com
+    networks:
+      solonet:
+        ipv4_address: 172.22.0.2
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:$IMAGETAG
+    tty: true
+    stdin_open: true
+    environment:
+      - SYS_CHANNEL=sys_channel
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.orga.com:7051
+      - CORE_PEER_LOCALMSPID=OrgAMSP
+      - CORE_PEER_TLS_ENABLED=false
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/orga.com/users/Admin@orga.com/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+        - /var/run/:/host/var/run/
+        - ./../chaincode/:/opt/gopath/src/github.com/chaincode
+        - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+        - ./scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
+        - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
+    depends_on:
+      - orderer0.yzm.com
+      - orderer1.yzm.com
+      - orderer2.yzm.com
+      - orderer3.yzm.com
+      - peer0.orga.com
+    networks:
+      solonet:
+        ipv4_address: 172.22.0.200
