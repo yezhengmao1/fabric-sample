@@ -10,6 +10,8 @@ services:
         - PBFT_LISTEN_PORT=6070
         - PBFT_NODE_ID=0
         - PBFT_NODE_TABLE=http://orderer0.yzm.com:6070;http://orderer1.yzm.com:6071;http://orderer2.yzm.com:6072;http://orderer3.yzm.com:6073
+        - PBFT_PUBLIC_KEY=909eeae6502d12b12a712551caeccc08ccab604619a7f370cd9dfef1f08fd6d5;c9a870e99461fd1668de345d2e156957562631cdefcfe1bd53cc26ea4747ee80;cbef40aee08f2e11f2b370a55e6aa28a932a7d3985f95ea5149cfcd8fcb6068f;fe2c145b38152588132a2374cc11b17a1e81ea1c2625374cefaca43fb54882bc
+        - PBFT_PRIVATE_KEY=e0797b4a9279f0987a3d7f4bb565ce501b2e8f88b2182c6567ce721f3fb28608
     volumes:
         - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
         - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer0.yzm.com/msp:/var/hyperledger/orderer/msp
@@ -29,6 +31,8 @@ services:
         - PBFT_LISTEN_PORT=6071
         - PBFT_NODE_ID=1
         - PBFT_NODE_TABLE=http://orderer0.yzm.com:6070;http://orderer1.yzm.com:6071;http://orderer2.yzm.com:6072;http://orderer3.yzm.com:6073
+        - PBFT_PUBLIC_KEY=909eeae6502d12b12a712551caeccc08ccab604619a7f370cd9dfef1f08fd6d5;c9a870e99461fd1668de345d2e156957562631cdefcfe1bd53cc26ea4747ee80;cbef40aee08f2e11f2b370a55e6aa28a932a7d3985f95ea5149cfcd8fcb6068f;fe2c145b38152588132a2374cc11b17a1e81ea1c2625374cefaca43fb54882bc
+        - PBFT_PRIVATE_KEY=bd3e50a519b2eb00f2d59a47c13c9e02b6488fefa276d76d3ac9125ad9cc0100
     volumes:
         - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
         - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer1.yzm.com/msp:/var/hyperledger/orderer/msp
@@ -48,6 +52,8 @@ services:
         - PBFT_LISTEN_PORT=6072
         - PBFT_NODE_ID=2
         - PBFT_NODE_TABLE=http://orderer0.yzm.com:6070;http://orderer1.yzm.com:6071;http://orderer2.yzm.com:6072;http://orderer3.yzm.com:6073
+        - PBFT_PUBLIC_KEY=909eeae6502d12b12a712551caeccc08ccab604619a7f370cd9dfef1f08fd6d5;c9a870e99461fd1668de345d2e156957562631cdefcfe1bd53cc26ea4747ee80;cbef40aee08f2e11f2b370a55e6aa28a932a7d3985f95ea5149cfcd8fcb6068f;fe2c145b38152588132a2374cc11b17a1e81ea1c2625374cefaca43fb54882bc
+        - PBFT_PRIVATE_KEY=002bbbe74ed66812e07095ecb16543b2f3943b09d3ebca74351553744c538207
     volumes:
         - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
         - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer2.yzm.com/msp:/var/hyperledger/orderer/msp
@@ -67,6 +73,8 @@ services:
         - PBFT_LISTEN_PORT=6073
         - PBFT_NODE_ID=3
         - PBFT_NODE_TABLE=http://orderer0.yzm.com:6070;http://orderer1.yzm.com:6071;http://orderer2.yzm.com:6072;http://orderer3.yzm.com:6073
+        - PBFT_PUBLIC_KEY=909eeae6502d12b12a712551caeccc08ccab604619a7f370cd9dfef1f08fd6d5;c9a870e99461fd1668de345d2e156957562631cdefcfe1bd53cc26ea4747ee80;cbef40aee08f2e11f2b370a55e6aa28a932a7d3985f95ea5149cfcd8fcb6068f;fe2c145b38152588132a2374cc11b17a1e81ea1c2625374cefaca43fb54882bc
+        - PBFT_PRIVATE_KEY=7b3aba267bd6fc195da3aad06e8611fade48ea7fcef243ee502a1fbc390dd108
     volumes:
         - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
         - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer3.yzm.com/msp:/var/hyperledger/orderer/msp
