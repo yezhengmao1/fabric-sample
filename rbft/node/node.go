@@ -7,6 +7,7 @@ import (
 	"github.com/hyperledger/fabric/orderer/consensus/rbft/server"
 	"go.dedis.ch/kyber"
 	"log"
+	"time"
 )
 
 var GNode *Node = nil
@@ -62,7 +63,7 @@ func NewNode(cfg *cmd.SharedConfig, support consensus.ConsenterSupport) *Node {
 		sequence: NewSequence(cfg),
 		// the message buffer to store msg
 		buffer: message.NewBuffer(),
-		state:  STATERECVORDER,
+		state:  STATESENDORDER,
 		// chan for message
 		requestRecv:    make(chan *message.Request),
 		prePrepareRecv: make(chan *message.PrePrepare),
@@ -78,7 +79,7 @@ func NewNode(cfg *cmd.SharedConfig, support consensus.ConsenterSupport) *Node {
 		supports:             make(map[string]consensus.ConsenterSupport),
 	}
 	log.Printf("[Node] the node id:%d, view:%d, fault number:%d, sequence: %d, lastblock:%s\n",
-		node.id, node.view, node.fault, node.sequence.PrepareSequence(), node.lastBlock.Hash())
+		node.id, node.view, node.fault, node.sequence.PrepareSequence(), node.lastBlock.Hash()[0:9])
 
 	node.RegisterChain(support)
 	node.client = NewClient(cfg, node)
@@ -99,9 +100,13 @@ func (n *Node) Run() {
 	n.server.RegisterChan(n.requestRecv, n.prePrepareRecv, n.prepareRecv, n.commitRecv, n.checkPointRecv, n.replyRecv, n.comRecv)
 	n.client.RegisterChan(n.replyRecv)
 	//
-	go n.client.Run()
 	go n.server.Run()
+	go n.client.Run()
+	timer := time.After(time.Second * 3)
+	<-timer
 	go n.stateThread()
+
+	go n.comRecvThread()
 }
 
 func (n *Node) BufferMessage(msg *message.Message) {

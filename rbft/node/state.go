@@ -1,6 +1,8 @@
 package node
 
-import "log"
+import (
+	"log"
+)
 
 type State int
 
@@ -15,7 +17,7 @@ func (n *Node) stateThread() {
 	for {
 		switch n.state {
 		case STATESENDORDER:
-			
+			n.broadCastComMessage()
 			n.state = STATERECVORDER
 		case STATERECVORDER:
 
