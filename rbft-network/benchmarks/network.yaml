@@ -7,7 +7,7 @@ caliper:
   blockchain: fabric
   command:
     start: scripts/gen.sh;scripts/utils.sh up
-    end: scripts/utils.sh
+    end: scripts/utils.sh down
 
 info:
   Version: 1.4.4
