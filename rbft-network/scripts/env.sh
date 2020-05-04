@@ -84,12 +84,14 @@ TestDemo() {
         -n ${NAME} \
         --peerAddresses ${PEERORGANODE} \
         -c '{"Args":["open","count_a", "100"]}'
+    sleep 5
     peer chaincode invoke \
         -C ${CHANNEL_NAME} \
         -o ${ORDERERNODE} \
         -n ${NAME} \
         --peerAddresses ${PEERORGANODE} \
         -c '{"Args":["open","count_b", "100"]}'
+    sleep 5
     peer chaincode query \
         -C ${CHANNEL_NAME} \
         -n ${NAME} \
@@ -104,18 +106,21 @@ TestDemo() {
         -n ${NAME} \
         --peerAddresses ${PEERORGANODE} \
         -c '{"Args":["invoke","count_a","count_b","50"]}'
+    sleep 5
     peer chaincode invoke \
         -C ${CHANNEL_NAME} \
         -o ${ORDERERNODE} \
         -n ${NAME} \
         --peerAddresses ${PEERORGANODE} \
         -c '{"Args":["open","count_c", "100"]}'
+    sleep 5
     peer chaincode invoke \
         -C ${CHANNEL_NAME} \
         -o ${ORDERER3NODE} \
         -n ${NAME} \
         --peerAddresses ${PEERORGANODE} \
         -c '{"Args":["invoke","count_a","count_c","10"]}'
+    sleep 5
     peer chaincode query \
         -C ${CHANNEL_NAME} \
         -n ${NAME} \

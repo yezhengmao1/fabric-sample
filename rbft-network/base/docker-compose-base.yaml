@@ -12,6 +12,8 @@ services:
         - PBFT_NODE_TABLE=http://orderer0.yzm.com:6070;http://orderer1.yzm.com:6071;http://orderer2.yzm.com:6072;http://orderer3.yzm.com:6073
         - PBFT_PUBLIC_KEY=909eeae6502d12b12a712551caeccc08ccab604619a7f370cd9dfef1f08fd6d5;c9a870e99461fd1668de345d2e156957562631cdefcfe1bd53cc26ea4747ee80;cbef40aee08f2e11f2b370a55e6aa28a932a7d3985f95ea5149cfcd8fcb6068f;fe2c145b38152588132a2374cc11b17a1e81ea1c2625374cefaca43fb54882bc
         - PBFT_PRIVATE_KEY=e0797b4a9279f0987a3d7f4bb565ce501b2e8f88b2182c6567ce721f3fb28608
+        - PBFT_TBLS_PUBLIC_KEY=1475dc210a35dfd8fdd9a41c98d4ab07a4c2353a4f12d97c0a01ddddd347732514b82764c070e3162566cb512662ad5fd6c7deac75da71a8c871f5b0de97543f3d04366d98c744e7d2569043a941bcb8bac1654b776e4f25e9864c0a17c7b90669960affe8238c3dc00ef00b56807f2bab84a6fe9c32ab5553332e78fe21db00,66cb901e46e4700fcd90265204a56a836e5274de4c9c22bbb0adc2e013bfd54f484fba89acb26a9ae06cd64a5471c00ca2ef926851cdeb66d0f62dcac8f41f32762dcdbe3c7236162d4ffa742937979c681e4da5441bb9e986be0dc5528dc7bf401b573f3795170fe5ddf0283c41c0e46f02511a65c45f12b967c9713f922796,1a6cd6c30cfb41b0a597051d846a01a59798c3d02a8be9572ca9b9195acb5e172382addfdaae516569d52390bbcb2811e69a606219ceb33d28790f529cf48a2e8a2d53d9c27119faf9b8771675a28a2bf98fd8a4be8d0ccccab9b593926f009683e59b5483977ce5d661d1f05a89ffa7fa8a59b0b2ea31b77fa5dd32de42860a
+        - PBFT_TBLS_PRIVATE_KEY=10b6bcf6e928a5b6636a4a80a29bc5ff22b281012a24f10c5b85af758a00602f
     volumes:
         - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
         - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer0.yzm.com/msp:/var/hyperledger/orderer/msp
@@ -33,6 +35,8 @@ services:
         - PBFT_NODE_TABLE=http://orderer0.yzm.com:6070;http://orderer1.yzm.com:6071;http://orderer2.yzm.com:6072;http://orderer3.yzm.com:6073
         - PBFT_PUBLIC_KEY=909eeae6502d12b12a712551caeccc08ccab604619a7f370cd9dfef1f08fd6d5;c9a870e99461fd1668de345d2e156957562631cdefcfe1bd53cc26ea4747ee80;cbef40aee08f2e11f2b370a55e6aa28a932a7d3985f95ea5149cfcd8fcb6068f;fe2c145b38152588132a2374cc11b17a1e81ea1c2625374cefaca43fb54882bc
         - PBFT_PRIVATE_KEY=bd3e50a519b2eb00f2d59a47c13c9e02b6488fefa276d76d3ac9125ad9cc0100
+        - PBFT_TBLS_PUBLIC_KEY=1475dc210a35dfd8fdd9a41c98d4ab07a4c2353a4f12d97c0a01ddddd347732514b82764c070e3162566cb512662ad5fd6c7deac75da71a8c871f5b0de97543f3d04366d98c744e7d2569043a941bcb8bac1654b776e4f25e9864c0a17c7b90669960affe8238c3dc00ef00b56807f2bab84a6fe9c32ab5553332e78fe21db00,66cb901e46e4700fcd90265204a56a836e5274de4c9c22bbb0adc2e013bfd54f484fba89acb26a9ae06cd64a5471c00ca2ef926851cdeb66d0f62dcac8f41f32762dcdbe3c7236162d4ffa742937979c681e4da5441bb9e986be0dc5528dc7bf401b573f3795170fe5ddf0283c41c0e46f02511a65c45f12b967c9713f922796,1a6cd6c30cfb41b0a597051d846a01a59798c3d02a8be9572ca9b9195acb5e172382addfdaae516569d52390bbcb2811e69a606219ceb33d28790f529cf48a2e8a2d53d9c27119faf9b8771675a28a2bf98fd8a4be8d0ccccab9b593926f009683e59b5483977ce5d661d1f05a89ffa7fa8a59b0b2ea31b77fa5dd32de42860a
+        - PBFT_TBLS_PRIVATE_KEY=570010f7fdde6a6807a63e6fbc5c50f15d1c32c34028dafe6a57a67d0501b1cc
     volumes:
         - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
         - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer1.yzm.com/msp:/var/hyperledger/orderer/msp
@@ -54,6 +58,8 @@ services:
         - PBFT_NODE_TABLE=http://orderer0.yzm.com:6070;http://orderer1.yzm.com:6071;http://orderer2.yzm.com:6072;http://orderer3.yzm.com:6073
         - PBFT_PUBLIC_KEY=909eeae6502d12b12a712551caeccc08ccab604619a7f370cd9dfef1f08fd6d5;c9a870e99461fd1668de345d2e156957562631cdefcfe1bd53cc26ea4747ee80;cbef40aee08f2e11f2b370a55e6aa28a932a7d3985f95ea5149cfcd8fcb6068f;fe2c145b38152588132a2374cc11b17a1e81ea1c2625374cefaca43fb54882bc
         - PBFT_PRIVATE_KEY=002bbbe74ed66812e07095ecb16543b2f3943b09d3ebca74351553744c538207
+        - PBFT_TBLS_PUBLIC_KEY=1475dc210a35dfd8fdd9a41c98d4ab07a4c2353a4f12d97c0a01ddddd347732514b82764c070e3162566cb512662ad5fd6c7deac75da71a8c871f5b0de97543f3d04366d98c744e7d2569043a941bcb8bac1654b776e4f25e9864c0a17c7b90669960affe8238c3dc00ef00b56807f2bab84a6fe9c32ab5553332e78fe21db00,66cb901e46e4700fcd90265204a56a836e5274de4c9c22bbb0adc2e013bfd54f484fba89acb26a9ae06cd64a5471c00ca2ef926851cdeb66d0f62dcac8f41f32762dcdbe3c7236162d4ffa742937979c681e4da5441bb9e986be0dc5528dc7bf401b573f3795170fe5ddf0283c41c0e46f02511a65c45f12b967c9713f922796,1a6cd6c30cfb41b0a597051d846a01a59798c3d02a8be9572ca9b9195acb5e172382addfdaae516569d52390bbcb2811e69a606219ceb33d28790f529cf48a2e8a2d53d9c27119faf9b8771675a28a2bf98fd8a4be8d0ccccab9b593926f009683e59b5483977ce5d661d1f05a89ffa7fa8a59b0b2ea31b77fa5dd32de42860a
+        - PBFT_TBLS_PRIVATE_KEY=4374dd9878b78d02f42aefd58fff7d4f29acf164911a34de9bb789b63ad0713c
     volumes:
         - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
         - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer2.yzm.com/msp:/var/hyperledger/orderer/msp
@@ -75,6 +81,8 @@ services:
         - PBFT_NODE_TABLE=http://orderer0.yzm.com:6070;http://orderer1.yzm.com:6071;http://orderer2.yzm.com:6072;http://orderer3.yzm.com:6073
         - PBFT_PUBLIC_KEY=909eeae6502d12b12a712551caeccc08ccab604619a7f370cd9dfef1f08fd6d5;c9a870e99461fd1668de345d2e156957562631cdefcfe1bd53cc26ea4747ee80;cbef40aee08f2e11f2b370a55e6aa28a932a7d3985f95ea5149cfcd8fcb6068f;fe2c145b38152588132a2374cc11b17a1e81ea1c2625374cefaca43fb54882bc
         - PBFT_PRIVATE_KEY=7b3aba267bd6fc195da3aad06e8611fade48ea7fcef243ee502a1fbc390dd108
+        - PBFT_TBLS_PUBLIC_KEY=1475dc210a35dfd8fdd9a41c98d4ab07a4c2353a4f12d97c0a01ddddd347732514b82764c070e3162566cb512662ad5fd6c7deac75da71a8c871f5b0de97543f3d04366d98c744e7d2569043a941bcb8bac1654b776e4f25e9864c0a17c7b90669960affe8238c3dc00ef00b56807f2bab84a6fe9c32ab5553332e78fe21db00,66cb901e46e4700fcd90265204a56a836e5274de4c9c22bbb0adc2e013bfd54f484fba89acb26a9ae06cd64a5471c00ca2ef926851cdeb66d0f62dcac8f41f32762dcdbe3c7236162d4ffa742937979c681e4da5441bb9e986be0dc5528dc7bf401b573f3795170fe5ddf0283c41c0e46f02511a65c45f12b967c9713f922796,1a6cd6c30cfb41b0a597051d846a01a59798c3d02a8be9572ca9b9195acb5e172382addfdaae516569d52390bbcb2811e69a606219ceb33d28790f529cf48a2e8a2d53d9c27119faf9b8771675a28a2bf98fd8a4be8d0ccccab9b593926f009683e59b5483977ce5d661d1f05a89ffa7fa8a59b0b2ea31b77fa5dd32de42860a
+        - PBFT_TBLS_PRIVATE_KEY=65ca24bba4579580d3684b6a7f0a2739b6f24af8152437d109d44d7c831910e0
     volumes:
         - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
         - ../crypto-config/ordererOrganizations/yzm.com/orderers/orderer3.yzm.com/msp:/var/hyperledger/orderer/msp
