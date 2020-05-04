@@ -1,19 +1,19 @@
 package server
 
 import (
-	"github.com/hyperledger/fabric/orderer/consensus/pbft/cmd"
-	"github.com/hyperledger/fabric/orderer/consensus/pbft/message"
+	"github.com/hyperledger/fabric/orderer/consensus/rbft/cmd"
+	"github.com/hyperledger/fabric/orderer/consensus/rbft/message"
 	"log"
 	"net/http"
 	"strconv"
 )
 
 const (
-	RequestEntry     = "/request"
-	PrePrepareEntry  = "/preprepare"
-	PrepareEntry     = "/prepare"
-	CommitEntry      = "/commit"
-	CheckPointEntry  = "/checkpoint"
+	BlockEntry    = "/block"
+	ComEntry      = "/com"
+	ProposalEntry = "/proposal"
+	PrepareEntry  = "/prepare"
+	CommitEntry   = "/commit"
 )
 
 // http 监听请求
@@ -21,11 +21,11 @@ type HttpServer struct {
 	port   int
 	server *http.Server
 
-	requestRecv    chan *message.Request
-	prePrepareRecv chan *message.PrePrepare
-	prepareRecv    chan *message.Prepare
-	commitRecv     chan *message.Commit
-	checkPointRecv chan *message.CheckPoint
+	blockRecv    chan *message.Block
+	comRecv      chan *message.ComMsg
+	proposalRecv chan *message.Proposal
+	prepareRecv  chan *message.PrepareMsg
+	commitRecv   chan *message.CommitMsg
 }
 
 func NewServer(cfg *cmd.SharedConfig) *HttpServer {
@@ -37,32 +37,47 @@ func NewServer(cfg *cmd.SharedConfig) *HttpServer {
 	return httpServer
 }
 
-// config server: to register the handle chan
-func (s *HttpServer) RegisterChan(r chan *message.Request, pre chan *message.PrePrepare,
-	p chan *message.Prepare, c chan *message.Commit, cp chan *message.CheckPoint) {
-	log.Printf("[Server] register the chan for listen func")
-	s.requestRecv    = r
-	s.prePrepareRecv = pre
-	s.prepareRecv    = p
-	s.commitRecv     = c
-	s.checkPointRecv = cp
+// register server service and run
+func (s *HttpServer) Run() {
+	log.Printf("[Node] start the listen server thread")
+	s.registerServer()
 }
 
-func (s *HttpServer) Run() {
-	// register server service and run
-	log.Printf("[Node] start the listen server")
-	s.registerServer()
+// config server: to register the handle chan
+func (s *HttpServer) RegisterBlockChan(c chan *message.Block) {
+	log.Printf("[Server] register the chan for recv block msg")
+	s.blockRecv = c
+}
+
+func (s *HttpServer) RegisterComChan(com chan *message.ComMsg) {
+	log.Printf("[Server] register the chan for recv com msg")
+	s.comRecv = com
+}
+
+func (s *HttpServer) RegisterProposalChan(c chan *message.Proposal) {
+	log.Printf("[Server] register the chan for recv proposal msg")
+	s.proposalRecv = c
+}
+
+func (s *HttpServer) RegisterPrepareChan(c chan *message.PrepareMsg) {
+	log.Printf("[Server] register the chan for recv prepare msg")
+	s.prepareRecv = c
+}
+
+func (s *HttpServer) RegisterCommitChan(c chan *message.CommitMsg) {
+	log.Printf("[Server] register the chan for recv commit msg")
+	s.commitRecv = c
 }
 
 func (s *HttpServer) registerServer() {
 	log.Printf("[Server] set listen port:%d\n", s.port)
 
 	httpRegister := map[string]func(http.ResponseWriter, *http.Request){
-		RequestEntry:    s.HttpRequest,
-		PrePrepareEntry: s.HttpPrePrepare,
-		PrepareEntry:    s.HttpPrepare,
-		CommitEntry:     s.HttpCommit,
-		CheckPointEntry: s.HttpCheckPoint,
+		BlockEntry:    s.HttpBlock,
+		ComEntry:      s.HttpCom,
+		ProposalEntry: s.HttpProposal,
+		PrepareEntry:  s.HttpPrepare,
+		CommitEntry:   s.HttpCommit,
 	}
 
 	mux := http.NewServeMux()

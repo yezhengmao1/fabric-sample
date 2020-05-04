@@ -1,4 +1,4 @@
-package pbft
+package rbft
 
 import (
 	"github.com/hyperledger/fabric/orderer/consensus"

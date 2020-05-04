@@ -2,52 +2,55 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/hyperledger/fabric/orderer/consensus/pbft/message"
+	"github.com/hyperledger/fabric/orderer/consensus/rbft/message"
 	"log"
 	"net/http"
 )
 
-func (s *HttpServer) HttpRequest(w http.ResponseWriter, r *http.Request) {
-	var msg message.Request
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		log.Printf("[Http Error] %s", err)
-		return
+func CheckJsonDecode(err error) bool {
+	if err != nil {
+		log.Printf("[Http] error to decode json")
+		return false
 	}
-	s.requestRecv <- &msg
+	return true
 }
 
-func (s *HttpServer) HttpPrePrepare(w http.ResponseWriter, r *http.Request) {
-	var msg message.PrePrepare
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		log.Printf("[Http Error] %s", err)
+func (s *HttpServer) HttpCom(w http.ResponseWriter, r *http.Request) {
+	var msg message.ComMsg
+	if !CheckJsonDecode(json.NewDecoder(r.Body).Decode(&msg)) {
 		return
 	}
-	s.prePrepareRecv <- &msg
+	s.comRecv <- &msg
+}
+
+func (s *HttpServer) HttpProposal(w http.ResponseWriter, r *http.Request) {
+	var msg message.Proposal
+	if !CheckJsonDecode(json.NewDecoder(r.Body).Decode(&msg)) {
+		return
+	}
+	s.proposalRecv <- &msg
 }
 
 func (s *HttpServer) HttpPrepare(w http.ResponseWriter, r *http.Request) {
-	var msg message.Prepare
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		log.Printf("[Http Error] %s", err)
+	var msg message.PrepareMsg
+	if !CheckJsonDecode(json.NewDecoder(r.Body).Decode(&msg)) {
 		return
 	}
 	s.prepareRecv <- &msg
 }
 
 func (s *HttpServer) HttpCommit(w http.ResponseWriter, r *http.Request) {
-	var msg message.Commit
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		log.Printf("[Http Error] %s", err)
+	var msg message.CommitMsg
+	if !CheckJsonDecode(json.NewDecoder(r.Body).Decode(&msg)) {
 		return
 	}
 	s.commitRecv <- &msg
 }
 
-func (s *HttpServer) HttpCheckPoint(w http.ResponseWriter, r *http.Request) {
-	var msg message.CheckPoint
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		log.Printf("[Http Error] %s", err)
+func (s *HttpServer) HttpBlock(w http.ResponseWriter, r *http.Request) {
+	var msg message.Block
+	if !CheckJsonDecode(json.NewDecoder(r.Body).Decode(&msg)) {
 		return
 	}
-	s.checkPointRecv <- &msg
+	s.blockRecv <- &msg
 }

@@ -1,19 +1,19 @@
-package pbft
+package rbft
 
 import (
 	"fmt"
 	"github.com/hyperledger/fabric/orderer/consensus"
-	"github.com/hyperledger/fabric/orderer/consensus/pbft/cmd"
-	"github.com/hyperledger/fabric/orderer/consensus/pbft/message"
-	"github.com/hyperledger/fabric/orderer/consensus/pbft/node"
+	"github.com/hyperledger/fabric/orderer/consensus/rbft/cmd"
+	"github.com/hyperledger/fabric/orderer/consensus/rbft/message"
+	"github.com/hyperledger/fabric/orderer/consensus/rbft/node"
 	cb "github.com/hyperledger/fabric/protos/common"
 	"time"
 )
 
 type Chain struct {
-	exitChan    chan struct{}
-	support     consensus.ConsenterSupport
-	pbftNode	*node.Node
+	exitChan chan struct{}
+	support  consensus.ConsenterSupport
+	pbftNode *node.Node
 }
 
 func NewChain(support consensus.ConsenterSupport) *Chain {
@@ -48,7 +48,7 @@ func (ch *Chain) Errored() <-chan struct{} {
 func (ch *Chain) Halt() {
 	logger.Info("halt")
 	select {
-	case <- ch.exitChan:
+	case <-ch.exitChan:
 	default:
 		close(ch.exitChan)
 	}
@@ -70,17 +70,15 @@ func (ch *Chain) Order(env *cb.Envelope, configSeq uint64) error {
 	default:
 
 	}
-	req := &message.Request{
-		Op:        message.Operation{
-			Envelope:  env,
-			ChannelID: ch.support.ChainID(),
-			ConfigSeq: configSeq,
-			Type:      message.TYPENORMAL,
-		},
-		TimeStamp: message.TimeStamp(time.Now().UnixNano()),
-		ID:        0,
+	op := message.Operation{
+		Envelope:  env,
+		ChannelID: ch.support.ChainID(),
+		ConfigSeq: configSeq,
+		Type:      message.TYPENORMAL,
 	}
-	ch.pbftNode.SendPrimary(req)
+	// 广播
+	_, msg := message.NewMessage(op, message.TimeStamp(time.Now().UnixNano()), ch.pbftNode.GetId())
+	ch.pbftNode.MsgRecv <- msg
 	return nil
 }
 
@@ -93,16 +91,14 @@ func (ch *Chain) Configure(config *cb.Envelope, configSeq uint64) error {
 		return fmt.Errorf("Exiting")
 	default:
 	}
-	req := &message.Request{
-		Op:        message.Operation{
-			Envelope:  config,
-			ChannelID: ch.support.ChainID(),
-			ConfigSeq: configSeq,
-			Type:      message.TYPECONFIG,
-		},
-		TimeStamp: message.TimeStamp(time.Now().UnixNano()),
-		ID:        0,
+	op := message.Operation{
+		Envelope:  config,
+		ChannelID: ch.support.ChainID(),
+		ConfigSeq: configSeq,
+		Type:      message.TYPECONFIG,
 	}
-	ch.pbftNode.SendPrimary(req)
+	_, msg := message.NewMessage(op, message.TimeStamp(time.Now().UnixNano()), ch.pbftNode.GetId())
+	ch.pbftNode.MsgRecv <- msg
+	// 广播
 	return nil
 }

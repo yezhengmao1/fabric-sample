@@ -1,45 +1,94 @@
 package node
 
 import (
-	"github.com/hyperledger/fabric/orderer/consensus/pbft/message"
-	"github.com/hyperledger/fabric/orderer/consensus/pbft/server"
+	"github.com/hyperledger/fabric/orderer/consensus/rbft/crypto"
+	"github.com/hyperledger/fabric/orderer/consensus/rbft/message"
+	"github.com/hyperledger/fabric/orderer/consensus/rbft/server"
 	"log"
 )
 
-func (n *Node) prepareRecvAndCommitSendThread() {
+func (n *Node) boradCastPrepareMsg(proposal *message.Proposal) {
+	sigPart := crypto.TblsSign([]byte(proposal.Digest), int(n.id), n.tblsPrivateScalar)
+	content, msg := message.NewPrepareMsg(n.view, proposal.Sequence, proposal.Digest, sigPart)
+
+	n.buffer.PrepareBuffer.Lock()
+	n.buffer.PrepareBuffer.PushHandle(msg, message.LessPrepareMsg)
+	n.buffer.PrepareBuffer.ULock()
+
+	n.BroadCast(content, server.PrepareEntry)
+}
+
+func (n *Node) checkPrepareMsg(prepare *message.PrepareMsg) bool {
+	ret := crypto.TblsRecover([]byte(prepare.Digest), [][]byte{prepare.PartSig},
+		1, int(n.fault * 3 + 1), n.tblsPublicPoly)
+
+	if len(ret) == 0 {
+		log.Printf("[Prepare] message check error, part sig error")
+		return false
+	}
+
+	return true
+}
+
+func (n *Node) prepareRecvThread() {
 	for {
 		select {
-		case msg := <-n.prepareRecv:
-			if !n.checkPrepareMsg(msg) {
-				continue
-			}
-			// buffer the prepare msg
-			n.buffer.BufferPrepareMsg(msg)
-			// verify send commit msg
-			if n.buffer.IsTrueOfPrepareMsg(msg.Digest, n.cfg.FaultNum) {
-				log.Printf("[Prepare] prepare msg(%d) vote success and to send commit", msg.Sequence)
-				content, msg, err := message.NewCommitMsg(n.id, msg)
-				if err != nil {
-					continue
+		     // 按序号缓存,稍后 check
+			case msg := <-n.prepareRecv:
+				if n.checkPrepareMsg(msg) {
+					log.Printf("[Prepare] success verify prepare message for proposal(%s)", msg.Digest[:9])
+					n.buffer.PrepareBuffer.Lock()
+					n.buffer.PrepareBuffer.PushHandle(msg, message.LessPrepareMsg)
+					n.buffer.PrepareBuffer.ULock()
 				}
-				// buffer commit msg
-				n.buffer.BufferCommitMsg(msg)
-				// TODO broadcast error when buffer the commit msg
-				n.BroadCast(content, server.CommitEntry)
-			}
-			if n.buffer.IsReadyToExecute(msg.Digest, n.cfg.FaultNum, msg.View, msg.Sequence) {
-				n.readytoExecute(msg.Digest)
-			}
+
 		}
 	}
 }
 
-func (n *Node) checkPrepareMsg(msg *message.Prepare) bool {
-	if n.view != msg.View {
-		return false
+func (n *Node) prepareHandle() []byte {
+	n.buffer.PrepareBuffer.Lock()
+	defer n.buffer.PrepareBuffer.ULock()
+
+	if n.buffer.PrepareBuffer.Empty() {
+		// 没有缓存
+		return nil
+	} else if n.buffer.PrepareBuffer.Top().(*message.PrepareMsg).View < n.view {
+		// view 过期
+		n.buffer.PrepareBuffer.Pop()
+		return nil
+	}else if n.buffer.PrepareBuffer.Top().(*message.PrepareMsg).Sequence < n.sequence.PrepareSequence() {
+		// sequence 过期
+		n.buffer.PrepareBuffer.Pop()
+		return nil
+	}else if n.buffer.PrepareBuffer.Top().(*message.PrepareMsg).Sequence == n.sequence.PrepareSequence() &&
+			 n.buffer.PrepareBuffer.Top().(*message.PrepareMsg).View     == n.view &&
+			 n.buffer.PrepareBuffer.Top().(*message.PrepareMsg).Digest   != n.nowProposal.Digest {
+		// view 和 sequence 正确 处理的 proposal 不正确
+		n.buffer.PrepareBuffer.Pop()
+		return nil
+	}else if n.buffer.PrepareBuffer.Top().(*message.PrepareMsg).Sequence > n.sequence.PrepareSequence() {
+		return nil
+	}else if n.buffer.PrepareBuffer.Top().(*message.PrepareMsg).View > n.view {
+		return nil
 	}
-	if !n.sequence.CheckBound(msg.Sequence) {
-		return false
+
+	// view 和 sequence 和 proposal 正确 取出相同
+	if n.buffer.PrepareBuffer.LenHandle(message.EqualPrepareMsg) >= int(2 * n.fault + 1) {
+		parSig := n.buffer.PrepareBuffer.BatchHandle(message.EqualPrepareMsg)
+		toRecover := make([][]byte, 0)
+		for _, p := range parSig {
+			toRecover = append(toRecover, p.(*message.PrepareMsg).PartSig)
+		}
+		t := crypto.TblsRecover([]byte(n.nowProposal.Digest), toRecover,
+			int(n.fault) * 2 + 1, int(n.fault) * 3 + 1, n.tblsPublicPoly)
+		if len(t) == 0 {
+			log.Printf("[Prepare] can not recover the part sig\n")
+			return nil
+		}
+		return t
 	}
-	return true
+
+	return nil
 }
+

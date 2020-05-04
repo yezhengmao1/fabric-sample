@@ -2,10 +2,13 @@ package node
 
 import (
 	"github.com/hyperledger/fabric/orderer/consensus"
-	"github.com/hyperledger/fabric/orderer/consensus/pbft/cmd"
-	"github.com/hyperledger/fabric/orderer/consensus/pbft/message"
-	"github.com/hyperledger/fabric/orderer/consensus/pbft/server"
+	"github.com/hyperledger/fabric/orderer/consensus/rbft/cmd"
+	"github.com/hyperledger/fabric/orderer/consensus/rbft/message"
+	"github.com/hyperledger/fabric/orderer/consensus/rbft/server"
+	"go.dedis.ch/kyber"
+	"go.dedis.ch/kyber/share"
 	"log"
+	"time"
 )
 
 var GNode *Node = nil
@@ -13,61 +16,76 @@ var GNode *Node = nil
 type Node struct {
 	cfg    *cmd.SharedConfig
 	server *server.HttpServer
+	id     message.Identify
+	view   message.View
+	table  map[message.Identify]string
+	fault  uint
 
-	id       message.Identify
-	view     message.View
-	table    map[message.Identify]string
-	faultNum uint
+	privateScalar     kyber.Scalar
+	publicSet         []kyber.Point
+	tblsPublicPoly    *share.PubPoly
+	tblsPrivateScalar kyber.Scalar
 
-	lastReply      *message.LastReply
-	sequence       *Sequence
-	executeNum     *ExecuteOpNum
+	state         State
+	nowProposal   *message.Proposal
+	lastBlock     *message.LastBlock
+	prevBlock     *message.LastBlock
+	lastTimeStamp message.TimeStamp
 
-	buffer         *message.Buffer
+	sequence *Sequence
+	buffer   *message.Buffer
 
-	requestRecv    chan *message.Request
-	prePrepareRecv chan *message.PrePrepare
-	prepareRecv    chan *message.Prepare
-	commitRecv     chan *message.Commit
-	checkPointRecv chan *message.CheckPoint
+	MsgRecv      chan *message.Message
+	blockRecv    chan *message.Block
+	comRecv      chan *message.ComMsg
+	proposalRecv chan *message.Proposal
+	prepareRecv  chan *message.PrepareMsg
+	commitRecv   chan *message.CommitMsg
 
-	prePrepareSendNotify chan bool
-	executeNotify        chan bool
-
-	supports             map[string]consensus.ConsenterSupport
+	supports map[string]consensus.ConsenterSupport
 }
 
 func NewNode(cfg *cmd.SharedConfig, support consensus.ConsenterSupport) *Node {
 	node := &Node{
 		// config
-		cfg:	  cfg,
+		cfg: cfg,
 		// http server
-		server:   server.NewServer(cfg),
+		server: server.NewServer(cfg),
 		// information about node
-		id:       cfg.Id,
-		view:     cfg.View,
-		table:	  cfg.Table,
-		faultNum: cfg.FaultNum,
+		id:    cfg.Id,
+		view:  cfg.View,
+		table: cfg.Table,
+		fault: cfg.Fault,
+		// crypto
+		privateScalar:     cfg.PrivateScalar,
+		publicSet:         cfg.PublicSet,
+		tblsPublicPoly:    cfg.TblsPubPoly,
+		tblsPrivateScalar: cfg.TblsPrivateScalar,
+		// lastblock
+		lastBlock:     message.NewLastBlock(),
+		prevBlock:     message.NewLastBlock(),
+		lastTimeStamp: 0,
+		nowProposal:   nil,
 		// lastReply state
-		lastReply:  message.NewLastReply(),
-		sequence:   NewSequence(cfg),
-		executeNum: NewExecuteOpNum(),
+		sequence: NewSequence(cfg),
 		// the message buffer to store msg
 		buffer: message.NewBuffer(),
-		// chan for server and recv thread
-		requestRecv:    make(chan *message.Request),
-		prePrepareRecv: make(chan *message.PrePrepare),
-		prepareRecv:    make(chan *message.Prepare),
-		commitRecv:     make(chan *message.Commit),
-		checkPointRecv: make(chan *message.CheckPoint),
+		state:  STATESENDORDER,
+		// chan for message
+		MsgRecv:      make(chan *message.Message, 100),
+		blockRecv:    make(chan *message.Block),
+		comRecv:      make(chan *message.ComMsg),
+		proposalRecv: make(chan *message.Proposal),
+		prepareRecv:  make(chan *message.PrepareMsg),
+		commitRecv:   make(chan *message.CommitMsg),
 		// chan for notify pre-prepare send thread
-		prePrepareSendNotify: make(chan bool),
-		// chan for notify execute op and reply thread
-		executeNotify:        make(chan bool, 100),
-		supports: 			  make(map[string]consensus.ConsenterSupport),
+		supports: make(map[string]consensus.ConsenterSupport),
 	}
-	log.Printf("[Node] the node id:%d, view:%d, fault number:%d\n", node.id, node.view, node.faultNum)
+	log.Printf("[Node] the node id:%d, view:%d, fault number:%d, sequence: %d, lastblock:%s\n",
+		node.id, node.view, node.fault, node.sequence.PrepareSequence(), message.Hash(node.lastBlock.Content())[0:9])
+
 	node.RegisterChain(support)
+
 	return node
 }
 
@@ -80,14 +98,74 @@ func (n *Node) RegisterChain(support consensus.ConsenterSupport) {
 }
 
 func (n *Node) Run() {
-	// first register chan for server
-	n.server.RegisterChan(n.requestRecv, n.prePrepareRecv, n.prepareRecv, n.commitRecv, n.checkPointRecv)
+	// register chan for client and server
+	n.server.RegisterBlockChan(n.blockRecv)
+	n.server.RegisterComChan(n.comRecv)
+	n.server.RegisterProposalChan(n.proposalRecv)
+	n.server.RegisterPrepareChan(n.prepareRecv)
+	n.server.RegisterCommitChan(n.commitRecv)
+
+	go n.clientThread()
 	go n.server.Run()
-	go n.requestRecvThread()
-	go n.prePrepareSendThread()
-	go n.prePrepareRecvAndPrepareSendThread()
-	go n.prepareRecvAndCommitSendThread()
+
+	timer := time.After(time.Second * 3)
+	<-timer
+
+	go n.stateThread()
+
+	go n.blockRecvThread()
+	go n.proposalRecvThread()
+	go n.comRecvThread()
+	go n.prepareRecvThread()
 	go n.commitRecvThread()
-	go n.executeAndReplyThread()
-	go n.checkPointRecvThread()
+}
+
+func (n *Node) GetId() message.Identify {
+	return n.id
+}
+
+func (n *Node) clientThread() {
+	log.Printf("[Client] run the client thread")
+	requestBuffer := make([]*message.Message, 0)
+	var timer <-chan time.Time
+	for {
+		select {
+		case msg := <-n.MsgRecv:
+			timer = nil
+			requestBuffer = append(requestBuffer, msg)
+			if msg.Op.Type == message.TYPECONFIG {
+				// 有特殊配置区块需要立即写入
+				block := message.Block{
+					Requests:  requestBuffer,
+					TimeStamp: message.TimeStamp(time.Now().UnixNano()),
+				}
+				n.BroadCastAll(block.Content(), server.BlockEntry)
+				log.Printf("[Client] send request(%d) due to config", len(requestBuffer))
+				requestBuffer = make([]*message.Message, 0)
+			}else if len(requestBuffer) >= 512 {
+				// 达到区块配置交易最大数量
+				block := message.Block{
+					Requests:  requestBuffer,
+					TimeStamp: message.TimeStamp(time.Now().UnixNano()),
+				}
+				n.BroadCastAll(block.Content(), server.BlockEntry)
+				log.Printf("[Client] send request(%d) due to oversize", len(requestBuffer))
+				requestBuffer = make([]*message.Message, 0)
+			}
+			timer = time.After(time.Second)
+		case <-timer:
+			timer = nil
+			if len(requestBuffer) > 0 {
+				// 超时打包
+				block := message.Block{
+					Requests:  requestBuffer,
+					TimeStamp: message.TimeStamp(time.Now().UnixNano()),
+				}
+				n.BroadCastAll(block.Content(), server.BlockEntry)
+				log.Printf("[Client] send request(%d) due to overtime", len(requestBuffer))
+				requestBuffer = make([]*message.Message, 0)
+			}
+			timer = time.After(time.Second)
+		}
+	}
 }

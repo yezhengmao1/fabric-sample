@@ -2,20 +2,14 @@ package node
 
 import (
 	"bytes"
-	"encoding/json"
-	"github.com/hyperledger/fabric/orderer/consensus/pbft/message"
-	"github.com/hyperledger/fabric/orderer/consensus/pbft/server"
 	"log"
 	"net/http"
 )
 
-func (n *Node) SendPrimary(msg *message.Request) {
-	content, err := json.Marshal(msg)
-	if err != nil {
-		log.Printf("error to marshal json")
-		return
+func (n *Node) BroadCastAll(content []byte, handle string) {
+	for _, v := range n.table {
+		go SendPost(content, v + handle)
 	}
-	go SendPost(content, n.table[n.GetPrimary()] + server.RequestEntry)
 }
 
 func (n *Node) BroadCast(content []byte, handle string) {
