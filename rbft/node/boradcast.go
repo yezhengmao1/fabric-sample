@@ -3,8 +3,8 @@ package node
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/hyperledger/fabric/orderer/consensus/rbft/message"
-	"github.com/hyperledger/fabric/orderer/consensus/rbft/server"
+	"github.com/hyperledger/fabric/orderer/consensus/pbft/message"
+	"github.com/hyperledger/fabric/orderer/consensus/pbft/server"
 	"log"
 	"net/http"
 )

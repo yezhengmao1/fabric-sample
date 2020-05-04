@@ -2,88 +2,72 @@ package node
 
 import (
 	"github.com/hyperledger/fabric/orderer/consensus"
-	"github.com/hyperledger/fabric/orderer/consensus/rbft/cmd"
-	"github.com/hyperledger/fabric/orderer/consensus/rbft/message"
-	"github.com/hyperledger/fabric/orderer/consensus/rbft/server"
-	"go.dedis.ch/kyber"
+	"github.com/hyperledger/fabric/orderer/consensus/pbft/cmd"
+	"github.com/hyperledger/fabric/orderer/consensus/pbft/message"
+	"github.com/hyperledger/fabric/orderer/consensus/pbft/server"
 	"log"
-	"time"
 )
 
 var GNode *Node = nil
 
 type Node struct {
-	cfg                  *cmd.SharedConfig
-	server               *server.HttpServer
-	client               *Client
-	id                   message.Identify
-	view                 message.View
-	table                map[message.Identify]string
-	fault                uint
-	privateScalar        kyber.Scalar
-	publicMap            map[message.Identify]kyber.Point
-	publicSet            []kyber.Point
-	state                State
-	lastBlock            *message.LastBlock
-	sequence             *Sequence
-	buffer               *message.Buffer
-	requestRecv          chan *message.Request
-	prePrepareRecv       chan *message.PrePrepare
-	prepareRecv          chan *message.Prepare
-	commitRecv           chan *message.Commit
-	checkPointRecv       chan *message.CheckPoint
-	replyRecv            chan *message.Reply
-	comRecv              chan *message.ComMsg
+	cfg    *cmd.SharedConfig
+	server *server.HttpServer
+
+	id       message.Identify
+	view     message.View
+	table    map[message.Identify]string
+	faultNum uint
+
+	lastReply      *message.LastReply
+	sequence       *Sequence
+	executeNum     *ExecuteOpNum
+
+	buffer         *message.Buffer
+
+	requestRecv    chan *message.Request
+	prePrepareRecv chan *message.PrePrepare
+	prepareRecv    chan *message.Prepare
+	commitRecv     chan *message.Commit
+	checkPointRecv chan *message.CheckPoint
+
 	prePrepareSendNotify chan bool
-	viewChangeNotify     chan bool
 	executeNotify        chan bool
+
 	supports             map[string]consensus.ConsenterSupport
 }
 
 func NewNode(cfg *cmd.SharedConfig, support consensus.ConsenterSupport) *Node {
 	node := &Node{
 		// config
-		cfg: cfg,
+		cfg:	  cfg,
 		// http server
-		server: server.NewServer(cfg),
-		// client server
-		client: nil,
+		server:   server.NewServer(cfg),
 		// information about node
-		id:    cfg.Id,
-		view:  cfg.View,
-		table: cfg.Table,
-		fault: cfg.Fault,
-		// crypto
-		privateScalar: cfg.PrivateScalar,
-		publicMap:     cfg.PublicMap,
-		publicSet:     cfg.PublicSet,
-		// lastblock
-		lastBlock: message.NewLastBlock(),
+		id:       cfg.Id,
+		view:     cfg.View,
+		table:	  cfg.Table,
+		faultNum: cfg.FaultNum,
 		// lastReply state
-		sequence: NewSequence(cfg),
+		lastReply:  message.NewLastReply(),
+		sequence:   NewSequence(cfg),
+		executeNum: NewExecuteOpNum(),
 		// the message buffer to store msg
 		buffer: message.NewBuffer(),
-		state:  STATESENDORDER,
-		// chan for message
+		// chan for server and recv thread
 		requestRecv:    make(chan *message.Request),
 		prePrepareRecv: make(chan *message.PrePrepare),
 		prepareRecv:    make(chan *message.Prepare),
 		commitRecv:     make(chan *message.Commit),
 		checkPointRecv: make(chan *message.CheckPoint),
-		replyRecv:      make(chan *message.Reply),
-		comRecv:        make(chan *message.ComMsg),
 		// chan for notify pre-prepare send thread
 		prePrepareSendNotify: make(chan bool),
-		viewChangeNotify:     make(chan bool),
+		// chan for notify execute op and reply thread
 		executeNotify:        make(chan bool, 100),
-		supports:             make(map[string]consensus.ConsenterSupport),
+		supports: 			  make(map[string]consensus.ConsenterSupport),
 	}
-	log.Printf("[Node] the node id:%d, view:%d, fault number:%d, sequence: %d, lastblock:%s\n",
-		node.id, node.view, node.fault, node.sequence.PrepareSequence(), node.lastBlock.Hash()[0:9])
-
+	log.Printf("[Node] the node id:%d, view:%d, fault number:%d\n", node.id, node.view, node.faultNum)
 	node.RegisterChain(support)
-	node.client = NewClient(cfg, node)
-
 	return node
 }
 
@@ -96,23 +80,14 @@ func (n *Node) RegisterChain(support consensus.ConsenterSupport) {
 }
 
 func (n *Node) Run() {
-	// register chan for client and server
-	n.server.RegisterChan(n.requestRecv, n.prePrepareRecv, n.prepareRecv, n.commitRecv, n.checkPointRecv, n.replyRecv, n.comRecv)
-	n.client.RegisterChan(n.replyRecv)
-	//
+	// first register chan for server
+	n.server.RegisterChan(n.requestRecv, n.prePrepareRecv, n.prepareRecv, n.commitRecv, n.checkPointRecv)
 	go n.server.Run()
-	go n.client.Run()
-	timer := time.After(time.Second * 3)
-	<-timer
-	go n.stateThread()
-
-	go n.comRecvThread()
-}
-
-func (n *Node) BufferMessage(msg *message.Message) {
-	n.client.BufferMessage(msg)
-}
-
-func (n *Node) GetState() State {
-	return n.state
+	go n.requestRecvThread()
+	go n.prePrepareSendThread()
+	go n.prePrepareRecvAndPrepareSendThread()
+	go n.prepareRecvAndCommitSendThread()
+	go n.commitRecvThread()
+	go n.executeAndReplyThread()
+	go n.checkPointRecvThread()
 }
