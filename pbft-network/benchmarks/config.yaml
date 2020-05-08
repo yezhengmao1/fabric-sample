@@ -12,34 +12,34 @@ test:
     rateControl:
       type: fixed-rate
       opts:
-        tps: 500
+        tps: 100
     callback: ../chaincode/demo/callback/open.js
 
   - label: transfer
     description: transfer
-    txNumber: 1000
+    txNumber: 2000
     rateControl:
       type: fixed-rate
       opts:
-        tps: 500
+        tps: 100
     callback: ../chaincode/demo/callback/transfer.js
 
   - label: query
     description: query
-    txNumber: 1000
+    txNumber: 2000
     rateControl:
       type: fixed-rate
       opts:
-        tps: 500
+        tps: 100
     callback: ../chaincode/demo/callback/query.js
 
   - label: delete
     description: delete
-    txNumber: 1000
+    txNumber: 2000
     rateControl:
       type: fixed-rate
       opts:
-        tps: 500
+        tps: 100
     callback: ../chaincode/demo/callback/delete.js
 
 monitor:
