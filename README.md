@@ -1,3 +1,8 @@
+# 说明
+
+* [PBFT 共识实现与网络搭建方法](https://www.yezhem.com/index.php/archives/52/)    
+* [SOLO 共识网络搭建方法](https://www.yezhem.com/index.php/archives/39/)
+
 # 环境
 * Hyperleger/fabric v1.4.4  
 * Hyperleger/caliepr-cli v0.3.0  
